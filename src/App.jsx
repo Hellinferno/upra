@@ -15,8 +15,15 @@ import {
   Phone, Mail, Globe, Lock, Bell, LayoutGrid,
   CreditCard, FileCheck, Home, Users, Building,
   Rocket, Award, HelpCircle, ArrowRight, ArrowLeft, Star,
-  Plane, Scale, FileSpreadsheet, Percent, Landmark, Quote, Plus, Minus, Smartphone, Key, Briefcase as BriefcaseIcon
+  Plane, Scale, FileSpreadsheet, Percent, Landmark, Quote, Plus, Minus, Smartphone, Key, Briefcase as BriefcaseIcon, UploadCloud, Download, Info, ThumbsUp, ThumbsDown
 } from 'lucide-react';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+// --- UTILITIES ---
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
 
 // --- FIREBASE CONFIGURATION ---
 // 🔴 REPLACE THESE VALUES WITH YOUR KEYS FROM FIREBASE CONSOLE
@@ -30,15 +37,26 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let auth;
-try {
-  const app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-} catch (error) {
-  console.log("Firebase not initialized yet. Waiting for keys.");
+let auth = null;
+if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+  try {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+  } catch (error) {
+    console.log("Firebase not initialized. Using Demo Mode.");
+  }
 }
 
-// --- Mock Data & Constants ---
+// --- CONSTANTS & DATA MAPPING ---
+const SERVICE_PROFESSION_MAP = {
+  "Private Limited Company": ["CS", "CA"],
+  "Limited Liability Partnership": ["CS", "CA"],
+  "One Person Company": ["CS", "CA"],
+  "GST Registration": ["CA", "Tax Consultant"],
+  "Trademark Registration": ["Lawyer", "CS"],
+  "Income Tax Return": ["CA", "Tax Consultant"],
+  "FSSAI Registration": ["Other", "CA"],
+};
 
 const NAV_MENU = {
   Startup: [
@@ -192,7 +210,6 @@ const NAV_MENU = {
   ]
 };
 
-// --- Service Details Content ---
 const SERVICE_DETAILS = {
   "Limited Liability Partnership": {
     title: "Limited Liability Partnership (LLP) Registration",
@@ -265,7 +282,6 @@ const SERVICE_DETAILS = {
       "Passport photos"
     ]
   },
-  // Additional services would be populated here
 };
 
 const POPULAR_SERVICES = [
@@ -308,7 +324,6 @@ const HOME_CATEGORIES = [
 ];
 
 // --- Components ---
-
 const Logo = ({ className = "" }) => (
   <div className={`flex flex-col select-none ${className}`}>
     <div className="flex items-baseline leading-none">
@@ -325,6 +340,39 @@ const Logo = ({ className = "" }) => (
     </div>
   </div>
 );
+
+// --- Infinite Grid Effect (Pure CSS/SVG version) ---
+const InfiniteGrid = () => {
+  return (
+    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+      {/* Background Grid */}
+      <div
+        className="absolute inset-0 z-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `
+              linear-gradient(to right, #000 1px, transparent 1px),
+              linear-gradient(to bottom, #000 1px, transparent 1px)
+            `,
+          backgroundSize: '40px 40px',
+        }}
+      ></div>
+
+      {/* Moving Light Effect */}
+      <div
+        className="absolute inset-0 z-0 opacity-40 bg-gradient-to-tr from-blue-100/50 via-transparent to-transparent"
+        style={{
+          animation: 'pulse 5s infinite alternate'
+        }}
+      ></div>
+      <style>{`
+         @keyframes pulse {
+           0% { opacity: 0.3; transform: scale(1); }
+           100% { opacity: 0.5; transform: scale(1.05); }
+         }
+       `}</style>
+    </div>
+  );
+};
 
 const ServiceCard = ({ service, onClick }) => {
   const Icon = service.icon || FileText;
@@ -349,7 +397,8 @@ const ServiceCard = ({ service, onClick }) => {
   );
 };
 
-const ServicePage = ({ serviceName, onBack }) => {
+// --- SERVICE PAGE with "Booking" ---
+const ServicePage = ({ serviceName, onBack, onBook }) => {
   const details = SERVICE_DETAILS[serviceName];
   const content = details || {
     title: serviceName,
@@ -363,13 +412,22 @@ const ServicePage = ({ serviceName, onBack }) => {
     ],
     pros: [],
     cons: [],
-    documents: [
-      "PAN Card of Applicant",
-      "Aadhar Card / Voter ID / Passport",
-      "Passport Size Photograph",
-      "Proof of Business Address (Electricity Bill/Rent Agreement)",
-      "Bank Account Details"
-    ]
+    documents: ["PAN Card", "Aadhar Card", "Photo"]
+  };
+
+  const [isBooking, setIsBooking] = useState(false);
+  const [formData, setFormData] = useState({ fullName: '', email: '', phone: '' });
+
+  const handleBookSubmit = (e) => {
+    e.preventDefault();
+    // Pass the order details up to App
+    onBook({
+      service: serviceName,
+      ...formData,
+      date: new Date().toISOString(),
+      status: 'Pending Allocation',
+      documents: content.documents
+    });
   };
 
   return (
@@ -399,43 +457,48 @@ const ServicePage = ({ serviceName, onBack }) => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button className="bg-blue-600 text-white px-8 py-3.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
-                Get Started Now
+              <button
+                onClick={() => setIsBooking(true)}
+                className="bg-blue-600 text-white px-8 py-3.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+              >
+                Book Now
               </button>
-              <div className="flex items-center text-slate-600 px-4">
-                <Star className="w-5 h-5 text-yellow-400 fill-current mr-2" />
-                <span className="font-bold mr-1">4.8/5</span> Rating
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6 text-sm text-slate-500">
-              <span className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" /> 100% Online Process</span>
-              <span className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" /> Expert Support</span>
             </div>
           </div>
 
           <div className="relative">
             <div className="bg-slate-50 rounded-2xl p-8 border border-gray-100 shadow-xl relative z-10">
-              <h3 className="font-bold text-xl mb-6">Request a Callback</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">FULL NAME</label>
-                  <input type="text" className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter your name" />
+              {isBooking ? (
+                <div className="animate-fade-in">
+                  <h3 className="font-bold text-xl mb-4 text-slate-900">Finalize Booking</h3>
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-800">
+                    Simulating Payment & Document Upload...
+                  </div>
+                  <form onSubmit={handleBookSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1">YOUR NAME</label>
+                      <input required type="text" className="w-full p-2 border rounded" value={formData.fullName} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
+                    </div>
+                    <button className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">
+                      Pay & Submit Order
+                    </button>
+                    <button type="button" onClick={() => setIsBooking(false)} className="w-full text-gray-500 text-sm py-2">Cancel</button>
+                  </form>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">EMAIL ADDRESS</label>
-                  <input type="email" className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="name@example.com" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">PHONE NUMBER</label>
-                  <input type="tel" className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="+91 98765 43210" />
-                </div>
-                <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition-colors">
-                  Get Free Consultation
-                </button>
-              </form>
+              ) : (
+                <>
+                  <h3 className="font-bold text-xl mb-6">Request a Callback</h3>
+                  <form className="space-y-4">
+                    <input type="text" className="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none" placeholder="Full Name" />
+                    <input type="email" className="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none" placeholder="Email" />
+                    <input type="tel" className="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none" placeholder="Phone" />
+                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition-colors">
+                      Get Free Consultation
+                    </button>
+                  </form>
+                </>
+              )}
             </div>
-            <div className="absolute top-10 -right-10 w-full h-full bg-blue-600/5 rounded-2xl -z-10"></div>
           </div>
         </div>
       </section>
@@ -777,7 +840,15 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
     setError('');
 
     if (!auth) {
-      setError("Firebase configuration missing.");
+      const mockUser = {
+        name: isSignUp ? fullName : "Demo Partner",
+        email: email,
+        isPartner: true,
+        profession: isSignUp ? profession : "CA", // Default to CA for demo
+        uid: "partner_" + Date.now()
+      };
+      setUser(mockUser);
+      setView('partnerDashboard'); // New specific dashboard
       return;
     }
 
@@ -791,7 +862,9 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
         setUser({
           name: fullName,
           email: email,
-          isPartner: true
+          isPartner: true,
+          profession: profession,
+          uid: userCredential.user.uid
         });
       } else {
         // Login Logic
@@ -799,10 +872,12 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
         setUser({
           name: userCredential.user.displayName || "Partner",
           email: userCredential.user.email,
-          isPartner: true
+          isPartner: true,
+          profession: "CA", // Fallback for demo as we don't have DB here
+          uid: userCredential.user.uid
         });
       }
-      setView('dashboard');
+      setView('partnerDashboard');
     } catch (err) {
       console.error(err);
       setError(err.message.replace("Firebase: ", ""));
@@ -1040,161 +1115,63 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
   );
 };
 
-// ... [Dashboard, HomeLanding, Landing Page Components, Testimonials, FAQ etc. are same as defined before] ...
-// Re-inserting for complete file
-const Dashboard = ({ user, onLogout }) => {
+// --- CLIENT DASHBOARD (Enhanced to show Orders) ---
+const Dashboard = ({ user, onLogout, orders }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  // ... [Dashboard content remains unchanged]
+
+  // Filter orders for this specific user (In mock, user.uid matches)
+  // For demo, we show all if no filtering logic is rigorous, but let's try to match
+  const myOrders = orders; // In real app: orders.filter(o => o.userId === user.uid)
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-inter">
-      {/* Sidebar */}
+      {/* ... [Sidebar Same as before] ... */}
       <div className="w-72 bg-slate-900 text-white hidden md:flex flex-col shadow-2xl z-20">
-        <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold shadow-lg shadow-blue-500/30">L</div>
-            <span className="font-bold text-xl tracking-tight text-white">LEDGERS</span>
-          </div>
-        </div>
-
+        <div className="p-6 border-b border-slate-800"><span className="font-bold text-xl">CLIENT PANEL</span></div>
         <nav className="flex-1 py-8 px-4 space-y-2">
-          {[
-            { id: 'overview', icon: LayoutGrid, label: 'Overview' },
-            { id: 'services', icon: Briefcase, label: 'My Services' },
-            { id: 'compliance', icon: FileCheck, label: 'Compliance' },
-            { id: 'documents', icon: FileText, label: 'Documents' },
-            { id: 'payments', icon: CreditCard, label: 'Payments' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${activeTab === item.id
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="tracking-wide">{item.label}</span>
-            </button>
-          ))}
+          <button onClick={() => setActiveTab('overview')} className="w-full text-left px-4 py-2 text-slate-300 hover:text-white">Overview</button>
+          <button onClick={() => setActiveTab('orders')} className="w-full text-left px-4 py-2 text-slate-300 hover:text-white">My Orders</button>
         </nav>
-
-        <div className="p-6 border-t border-slate-800 bg-slate-900">
-          <div className="flex items-center space-x-3 mb-6 p-3 bg-slate-800 rounded-xl border border-slate-700">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-sm shadow-md">
-              {user.name.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate text-white">{user.name}</p>
-              <p className="text-xs text-slate-400 truncate">{user.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={onLogout}
-            className="w-full py-2.5 px-4 bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:border-slate-600 rounded-lg text-sm text-slate-300 font-medium transition-all"
-          >
-            Sign Out
-          </button>
-        </div>
+        <div className="p-6"><button onClick={onLogout} className="text-red-400">Logout</button></div>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between md:hidden shadow-sm z-10">
-          <span className="font-bold text-slate-900 text-lg">LEDGERS</span>
-          <button onClick={onLogout} className="text-sm text-red-600 font-medium">Logout</button>
-        </header>
-
         <main className="flex-1 overflow-y-auto p-6 md:p-10">
           <div className="max-w-6xl mx-auto">
-            {activeTab === 'overview' && (
-              <div className="space-y-8 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Overview</h1>
-                    <p className="text-slate-500 mt-1">Welcome back to your business command center.</p>
-                  </div>
-                  <span className="text-xs font-medium text-slate-400 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">Last synced: Just now</span>
-                </div>
+            <h1 className="text-3xl font-bold mb-8">Hello, {user.name}</h1>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_15px_rgb(0,0,0,0.04)] hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="bg-green-50 p-3 rounded-xl">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+            {/* Dynamic Orders List */}
+            {activeTab === 'orders' || activeTab === 'overview' ? (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold">Your Service Requests</h2>
+                {myOrders.length === 0 ? (
+                  <div className="p-8 bg-white rounded-xl text-center text-slate-500">No active orders found. Book a service to get started!</div>
+                ) : (
+                  myOrders.map((order, idx) => (
+                    <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                      <div>
+                        <h4 className="font-bold text-lg text-slate-900">{order.service}</h4>
+                        <p className="text-sm text-slate-500">Booked on: {new Date(order.date).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-400 mt-1">Order ID: #{1000 + idx}</p>
                       </div>
-                      <span className="text-xs font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">Good Standing</span>
-                    </div>
-                    <h3 className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Compliance Score</h3>
-                    <div className="flex items-end mt-2">
-                      <p className="text-4xl font-extrabold text-slate-900">98</p>
-                      <span className="text-slate-400 mb-1 ml-1 text-lg">/100</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_15px_rgb(0,0,0,0.04)] hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="bg-orange-50 p-3 rounded-xl">
-                        <Bell className="w-6 h-6 text-orange-600" />
+                      <div className="text-right">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 
+                                        ${order.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                            order.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                              'bg-yellow-100 text-yellow-700'}`}>
+                          {order.status}
+                        </span>
+                        {order.status === 'Completed' && (
+                          <button className="flex items-center text-blue-600 text-sm font-bold mt-1">
+                            <Download className="w-4 h-4 mr-1" /> Download
+                          </button>
+                        )}
                       </div>
-                      <span className="text-xs font-bold text-orange-700 bg-orange-50 px-3 py-1 rounded-full">2 Pending</span>
                     </div>
-                    <h3 className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Action Items</h3>
-                    <p className="text-2xl font-bold text-slate-900 mt-2">Tax Filing Due</p>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_15px_rgb(0,0,0,0.04)] hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="bg-blue-50 p-3 rounded-xl">
-                        <Wallet className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <button className="text-blue-600 text-xs font-bold hover:underline">Add Funds</button>
-                    </div>
-                    <h3 className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Wallet Balance</h3>
-                    <p className="text-3xl font-extrabold text-slate-900 mt-2">₹0.00</p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-                    <h3 className="font-bold text-lg text-slate-900">Recent Applications</h3>
-                    <button className="text-sm font-medium text-blue-600 hover:text-blue-700">View All Applications</button>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {[
-                      { service: "GST Registration", status: "Processing", date: "Oct 24, 2025" },
-                      { service: "DSC Class 3", status: "Completed", date: "Sep 12, 2025" },
-                      { service: "Udyam Registration", status: "Completed", date: "Aug 05, 2025" },
-                    ].map((item, i) => (
-                      <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-blue-50/30 transition-colors">
-                        <div className="flex items-center space-x-5">
-                          <div className={`w-2.5 h-2.5 rounded-full ring-4 ring-opacity-20 ${item.status === 'Completed' ? 'bg-green-500 ring-green-500' : 'bg-orange-500 ring-orange-500'}`}></div>
-                          <div>
-                            <p className="font-semibold text-slate-900">{item.service}</p>
-                            <p className="text-xs font-medium text-slate-400 mt-0.5">Ref: <span className="font-mono text-slate-500">#{1000 + i}</span></p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${item.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                            }`}>
-                            {item.status}
-                          </span>
-                          <p className="text-xs text-slate-400 mt-2 font-medium">{item.date}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
-            )}
-
-            {activeTab !== 'overview' && (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-                <div className="p-6 rounded-full bg-slate-100 mb-6">
-                  <Lock className="w-10 h-10 text-slate-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Feature Coming Soon</h3>
-                <p className="text-slate-500 max-w-sm mt-2">This section of the dashboard is currently under development in this prototype.</p>
-              </div>
-            )}
+            ) : null}
           </div>
         </main>
       </div>
@@ -1202,6 +1179,86 @@ const Dashboard = ({ user, onLogout }) => {
   );
 };
 
+// --- PARTNER DASHBOARD (New Component) ---
+const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork }) => {
+  // Filter available jobs based on partner profession
+  // e.g. If partner is CA, they see CA jobs.
+  const myProfession = user.profession || "CA";
+
+  const availableJobs = orders.filter(o =>
+    o.status === 'Pending Allocation' &&
+    SERVICE_PROFESSION_MAP[o.service]?.includes(myProfession)
+  );
+
+  const myActiveJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'In Progress');
+  const myCompletedJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'Completed');
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex font-inter">
+      {/* Partner Sidebar */}
+      <div className="w-72 bg-purple-900 text-white hidden md:flex flex-col shadow-2xl z-20">
+        <div className="p-6 border-b border-purple-800">
+          <div className="flex items-center space-x-3">
+            <span className="font-bold text-xl tracking-tight text-white">PARTNER PANEL</span>
+          </div>
+          <p className="text-xs text-purple-300 mt-1">{user.name} ({myProfession})</p>
+        </div>
+        <div className="p-6"><button onClick={onLogout} className="text-white bg-purple-800 px-4 py-2 rounded">Logout</button></div>
+      </div>
+
+      <main className="flex-1 overflow-y-auto p-10">
+        <h1 className="text-3xl font-bold mb-8 text-slate-800">Workstation</h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Available Jobs Column */}
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-slate-700 flex items-center"><Bell className="w-5 h-5 mr-2" /> New Opportunities</h2>
+            <div className="space-y-4">
+              {availableJobs.length === 0 && <p className="text-slate-400 italic">No new jobs matching your profile.</p>}
+              {availableJobs.map((job, i) => (
+                <div key={i} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+                  <h4 className="font-bold text-lg">{job.service}</h4>
+                  <p className="text-sm text-slate-500 mb-4">Client: {job.fullName}</p>
+                  <button
+                    onClick={() => onAcceptOrder(job)}
+                    className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
+                  >
+                    Accept & Start
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Jobs Column */}
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-slate-700 flex items-center"><BriefcaseIcon className="w-5 h-5 mr-2" /> My Active Jobs</h2>
+            <div className="space-y-4">
+              {myActiveJobs.length === 0 && <p className="text-slate-400 italic">You have no active jobs.</p>}
+              {myActiveJobs.map((job, i) => (
+                <div key={i} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                  <h4 className="font-bold text-lg">{job.service}</h4>
+                  <div className="my-4 bg-slate-50 p-3 rounded text-xs text-slate-600">
+                    <p className="font-bold mb-1">Documents Uploaded by Client:</p>
+                    <ul className="list-disc pl-4">
+                      {job.documents?.map((d, k) => <li key={k}>{d}</li>)}
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => onSubmitWork(job)}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center"
+                  >
+                    <UploadCloud className="w-4 h-4 mr-2" /> Submit Completed Work
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
 
 const HomeLanding = ({ filteredServices, setShowModal, setSearchQuery, searchQuery, onNavigate, onSearchInput }) => {
   const resultsRef = useRef(null);
@@ -1394,951 +1451,307 @@ const HomeLanding = ({ filteredServices, setShowModal, setSearchQuery, searchQue
   );
 };
 
-const StartupLanding = ({ onServiceClick }) => (
-  <div className="animate-slide-in bg-white font-inter">
-    {/* Startup Hero */}
-    <section className="bg-slate-900 text-white pt-32 pb-40 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-600/10 skew-x-12 translate-x-20"></div>
-      <div className="max-w-7xl mx-auto px-4 relative z-10">
-        <div className="max-w-3xl">
-          <div className="inline-block bg-blue-600/20 backdrop-blur-md text-blue-300 text-xs font-bold px-4 py-2 rounded-full mb-8 border border-blue-500/30 uppercase tracking-wider">
-            #1 Platform for Startups
-          </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
-            Turn Your Idea Into a <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Registered Business.</span>
-          </h1>
-          <p className="text-xl text-slate-400 mb-10 max-w-2xl leading-relaxed">
-            From company registration to IP protection and fundraising, UPRA Fillings is your trusted partner in the startup journey. Join thousands of founders who started here.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-5">
-            <button className="bg-blue-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg shadow-blue-900/50">
-              Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
-            </button>
-            <button className="bg-white/5 backdrop-blur-sm text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">
-              Talk to an Expert
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-    {/* ... Rest of Startup Landing (uses reused styles) ... */}
-    <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20 rounded-t-[3rem]">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {NAV_MENU.Startup.map((item, idx) => (
-            <ServiceCard
-              key={idx}
-              service={{
-                title: item.name,
-                desc: "Comprehensive startup registration services with expert guidance.",
-                icon: Building,
-                price: "Enquire"
-              }}
-              onClick={() => onServiceClick(item.name)}
-            />
-          ))}
-        </div>
-      </div>
-    </section>
-    <FAQSection />
+const StartupLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Startup Services</h1>
+    <p className="mb-8 text-slate-600 max-w-2xl">Launch your dream startup with our comprehensive incorporation packages. We handle everything from name reservation to incorporation and tax registration.</p>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {POPULAR_SERVICES.filter(s => s.title.includes('Private Limited') || s.title.includes('OPC') || s.title.includes('LLP')).map(s => (
+        <ServiceCard key={s.id} service={s} onClick={() => { }} />
+      ))}
+    </div>
   </div>
 );
 
-const MCALanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-emerald-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-emerald-600/30 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-emerald-500/30">
-              Ministry of Corporate Affairs Services
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Master Your <br />
-              <span className="text-emerald-400">Corporate Compliance.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              From company incorporation to annual filings and director changes, we simplify MCA compliance so you can focus on business growth.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-emerald-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center">
-                Explore Services <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU.MCA.map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "Expert MCA filing and compliance services for your company.",
-                  icon: FileText,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+const MCALanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">MCA Services</h1>
+    <p className="mb-8 text-slate-600">Company lifecycle management services including director changes, address changes, and capital changes.</p>
+    {/* Mock Content */}
+    <div className="bg-blue-50 p-8 rounded-xl border border-blue-100">
+      <h3 className="font-bold text-xl mb-4 text-blue-800">Featured: DIR-3 KYC</h3>
+      <p className="text-slate-700 mb-4">Mandatory annual KYC for all Directors. Failure to file incurs ₹5000 penalty.</p>
+      <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">File Now</button>
     </div>
-  );
-};
+  </div>
+);
 
-const ComplianceLanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-indigo-600/30 text-indigo-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-indigo-500/30">
-              Complete Compliance Solutions
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Stay Compliant, <br />
-              <span className="text-indigo-400">Avoid Penalties.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              We handle your TDS, PF, ESI, Payroll, and RoC filings so you can run your business worry-free. Dedicated experts for your company.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-indigo-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                Get Compliant Now <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU.Compliance.map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "End-to-end statutory compliance services to keep your business safe.",
-                  icon: Shield,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+const ComplianceLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Annual Compliance</h1>
+    <p className="mb-8 text-slate-600">Stay compliant with mandatory annual filings for Pvt Ltd, LLP, and OPCs.</p>
+  </div>
+);
 
-const GlobalLanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-cyan-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-cyan-600/30 text-cyan-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-cyan-500/30">
-              International Business Services
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Expand Your Business <br />
-              <span className="text-cyan-400">Globally.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              Incorporate in USA, UK, Singapore, or Dubai. We handle cross-border registrations, international taxation, and global IP protection.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-cyan-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-cyan-700 transition-colors flex items-center justify-center">
-                Go Global <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU.Global.map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "Expand your business internationally with our expert guidance.",
-                  icon: Globe,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+const GlobalLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Global Expansion</h1>
+    <p className="mb-8 text-slate-600">Incorporate your company in USA, Singapore, Dubai, and UK.</p>
+  </div>
+);
 
-const RegistrationsLanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-green-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-green-600/30 text-green-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-green-500/30">
-              Government Registrations
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Essential Licenses <br />
-              <span className="text-green-400">Made Simple.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              Get FSSAI, Shop Act, Udyam, and other mandatory government registrations online. 100% digital process with expert guidance.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-green-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center">
-                Start Registration <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU.Registrations.map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "Obtain necessary government registrations and licenses quickly.",
-                  icon: FileText,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+const RegistrationsLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Government Registrations</h1>
+    <p className="mb-8 text-slate-600">PF, ESI, FSSAI, ISO, MSME and more.</p>
+  </div>
+);
 
-const TrademarkLanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-rose-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-rose-600/30 text-rose-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-rose-500/30">
-              Intellectual Property Rights
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Protect Your <br />
-              <span className="text-rose-400">Brand Identity.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              Secure your brand name, logo, and slogan with our expert trademark services. From search to registration and objection handling.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-rose-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-rose-700 transition-colors flex items-center justify-center">
-                Secure Your Brand <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU.Trademark.map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "Comprehensive IPR services including trademark, copyright, and patent.",
-                  icon: Award,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+const TrademarkLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Intellectual Property</h1>
+    <p className="mb-8 text-slate-600">Protect your brand with Trademark, Copyright, and Patent filing.</p>
+  </div>
+);
 
-const GSTLanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-amber-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-amber-600/30 text-amber-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-amber-500/30">
-              Goods & Services Tax
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Seamless GST <br />
-              <span className="text-amber-400">Compliance.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              From fresh registration to monthly return filing and e-invoicing. We ensure your business is always GST compliant.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-amber-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-amber-700 transition-colors flex items-center justify-center">
-                Get GST Ready <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU["Goods & Services Tax"].map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "Complete GST solutions including registration, filing, and advisory.",
-                  icon: Calculator,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+const GSTLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Goods & Services Tax</h1>
+    <p className="mb-8 text-slate-600">GST Registration, Filing, and Advisory services.</p>
+  </div>
+);
 
-const IncomeTaxLanding = ({ onServiceClick }) => {
-  return (
-    <div className="animate-slide-in bg-white">
-      <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-600/10 skew-x-12 translate-x-20"></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-blue-600/30 text-blue-300 text-xs font-bold px-3 py-1 rounded-full mb-6 border border-blue-500/30">
-              Income Tax Services
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Smart Tax <br />
-              <span className="text-blue-400">Planning & Filing.</span>
-            </h1>
-            <p className="text-lg text-slate-400 mb-8 max-w-2xl">
-              Maximize your refunds and stay compliant. Expert assisted ITR filing for salaried, businesses, and professionals.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center justify-center">
-                File ITR Now <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {NAV_MENU["Income Tax"].map((item, idx) => (
-              <ServiceCard
-                key={idx}
-                service={{
-                  title: item.name,
-                  desc: "Expert income tax filing and planning services.",
-                  icon: Percent,
-                  price: "Enquire"
-                }}
-                onClick={() => onServiceClick(item.name)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+const IncomeTaxLanding = () => (
+  <div className="animate-slide-in p-10 max-w-7xl mx-auto">
+    <h1 className="text-4xl font-bold mb-6 text-slate-800">Income Tax</h1>
+    <p className="mb-8 text-slate-600">Personal and Corporate Income Tax Filing services.</p>
+  </div>
+);
 
 // --- Main App Component ---
-
 const App = () => {
-  // ... [No changes needed in App component logic, just ensure props are passed correctly] ...
-  // Re-pasting App for context, but logic remains same as previous step, just ensuring props passed.
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [activeMenu, setActiveMenu] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  // Updated view state to handle all new pages
-  const [view, setView] = useState('home');
-  const [selectedService, setSelectedService] = useState(null);
-  const [user, setUser] = useState(null);
-  const [showModal, setShowModal] = useState(null);
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle for Login/SignUp form
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [authError, setAuthError] = useState('');
+  const [view, setView] = useState('home'); // home, service, dashboard, partnerDashboard, login, partnerLogin
+  const [activeService, setActiveService] = useState(null);
+  const [user, setUser] = useState(null); // null or user object
+  const [activeMenu, setActiveMenu] = useState(null); // For Mega Menu
+  const [showOTP, setShowOTP] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // New States for Features
-  const [isResetting, setIsResetting] = useState(false); // Forgot Password View
-  const [resetEmail, setResetEmail] = useState('');
-  const [showOTPModal, setShowOTPModal] = useState(false); // OTP Popup
+  // Mock Database for Orders
+  const [orders, setOrders] = useState([
+    { id: 1001, service: 'Private Limited Company', status: 'In Progress', date: '2023-10-15', userId: 'user_123', assignedPartner: 'Demo Partner', documents: ['PAN', 'Aadhar'] },
+    { id: 1002, service: 'Trademark Registration', status: 'Completed', date: '2023-09-20', userId: 'user_123', assignedPartner: 'Demo Partner', documents: ['Logo'] }
+  ]);
 
+  // Navbar Transition
+  const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-
-    // Check for persisted user session
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          setUser({
-            name: currentUser.displayName || "User",
-            email: currentUser.email
-          });
-          setView('dashboard');
-        } else {
-          setUser(null);
-        }
-      });
-      return () => {
-        window.removeEventListener('scroll', handleScroll);
-        unsubscribe();
-      };
-    }
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    setAuthError('');
+  // Filter Services for Search
+  const filteredServices = POPULAR_SERVICES.filter(s =>
+    s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.desc.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-    if (!auth) {
-      setAuthError("Firebase is not configured. Please add your keys in the code.");
-      return;
-    }
-
-    try {
-      if (isSignUp) {
-        // Sign Up Logic
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Update profile with name
-        await updateProfile(userCredential.user, { displayName: name });
-        setUser({ name: name, email: email });
-      } else {
-        // Login Logic
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        setUser({
-          name: userCredential.user.displayName || "User",
-          email: userCredential.user.email
-        });
-      }
-      setView('dashboard');
-    } catch (error) {
-      console.error(error);
-      setAuthError(error.message.replace("Firebase: ", ""));
-    }
-  };
-
-  const handlePasswordReset = async (e) => {
-    e.preventDefault();
-    if (!resetEmail) return setAuthError("Please enter email");
-
-    if (!auth) {
-      alert("Firebase not configured");
-      return;
-    }
-
-    try {
-      await sendPasswordResetEmail(auth, resetEmail);
-      alert("Password reset email sent! Check your inbox.");
-      setIsResetting(false);
-    } catch (error) {
-      setAuthError(error.message);
-    }
-  };
-
-  const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-    }
-    setUser(null);
-    setView('home');
-  };
-
-  const handleServiceClick = (serviceName) => {
-    setSelectedService(serviceName);
+  // Handlers
+  const handleServiceClick = (serviceTitle) => {
+    // Find service object or create dummy
+    const service = POPULAR_SERVICES.find(s => s.title === serviceTitle) || { title: serviceTitle, desc: "Comprehensive professional service.", price: "₹999" };
+    setActiveService(service.title); // Use title as ID for simplicity in this demo
     setView('service');
-    setMobileMenuOpen(false);
+    setActiveMenu(null);
   };
 
-  const filteredServices = searchQuery
-    ? POPULAR_SERVICES.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    : POPULAR_SERVICES;
-
-  // View Mapping logic for main nav
-  const handleNavClick = (menuName) => {
-    switch (menuName) {
-      case 'Startup': setView('startup'); break;
-      case 'MCA': setView('mca'); break;
-      case 'Compliance': setView('compliance'); break;
-      case 'Global': setView('global'); break;
-      case 'Registrations': setView('registrations'); break;
-      case 'Trademark': setView('trademark'); break;
-      case 'Goods & Services Tax': setView('gst'); break;
-      case 'Income Tax': setView('incometax'); break;
-      default: setView('home');
+  const handleBookService = (orderDetails) => {
+    if (!user) {
+      setShowOTP(true); // Force login
+      return;
     }
+    // Create Order
+    const newOrder = {
+      ...orderDetails,
+      id: Date.now(),
+      userId: user.uid,
+      fullName: user.name
+    };
+    setOrders([newOrder, ...orders]);
+    alert("Order Placed Successfully!");
+    setView('dashboard');
   };
 
-  const handleSearchInput = (value) => {
-    // If user types in global search and is not on home, go to home
-    if (value && view !== 'home') {
-      setView('home');
-    }
+  const handlePartnerAccept = (job) => {
+    const updated = orders.map(o => o.id === job.id ? { ...o, status: 'In Progress', assignedPartner: user.name } : o);
+    setOrders(updated);
+    alert("Job Accepted! Check 'My Active Jobs'.");
   };
 
-  // Login View
-  if (view === 'login') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-inter">
-        {showOTPModal && <OTPModal onClose={() => setShowOTPModal(false)} />}
+  const handlePartnerSubmit = (job) => {
+    const updated = orders.map(o => o.id === job.id ? { ...o, status: 'Completed' } : o);
+    setOrders(updated);
+    alert("Work Submitted Successfully!");
+  };
 
-        <div className="bg-white w-full max-w-md p-10 rounded-3xl shadow-2xl border border-gray-100 relative">
-          <button onClick={() => setView('home')} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
-          </button>
+  const renderContent = () => {
+    if (view === 'dashboard' && user) return <Dashboard user={user} orders={orders} onLogout={() => { setUser(null); setView('home'); }} />;
+    if (view === 'partnerDashboard' && user) return <PartnerDashboard user={user} orders={orders} onLogout={() => { setUser(null); setView('home'); }} onAcceptOrder={handlePartnerAccept} onSubmitWork={handlePartnerSubmit} />;
 
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {isResetting ? "Reset Password" : (isSignUp ? "Create Account" : "Welcome Back")}
-            </h2>
-            <p className="text-slate-500 mt-2">
-              {isResetting ? "Enter your email to receive instructions" : (isSignUp ? "Sign up to get started" : "Sign in to access your dashboard")}
-            </p>
-          </div>
+    if (view === 'partnerLogin') return <PartnersLogin onBack={() => setView('home')} setUser={setUser} setView={setView} />;
 
-          {authError && (
-            <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-center">
-              <Minus className="w-4 h-4 mr-2" /> {authError}
-            </div>
-          )}
-
-          {isResetting ? (
-            // --- FORGOT PASSWORD FORM ---
-            <form onSubmit={handlePasswordReset} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="name@company.com"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">
-                Send Reset Link
-              </button>
-              <button
-                type="button"
-                onClick={() => { setIsResetting(false); setAuthError(''); }}
-                className="w-full text-slate-500 hover:text-slate-700 font-bold text-sm"
-              >
-                Cancel
-              </button>
-            </form>
-          ) : (
-            // --- LOGIN / SIGNUP FORM ---
-            <form onSubmit={handleAuth} className="space-y-6">
-              {isSignUp && (
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    placeholder="John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
-                <input
-                  type="password"
-                  required
-                  className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              {!isSignUp && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsResetting(true)}
-                    className="text-sm font-bold text-blue-600 hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              )}
-
-              <button type="submit" className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">
-                {isSignUp ? "Sign Up" : "Secure Login"}
-              </button>
-
-              {!isSignUp && (
-                <button
-                  type="button"
-                  onClick={() => setShowOTPModal(true)}
-                  className="w-full bg-white border-2 border-slate-100 text-slate-700 py-3.5 rounded-xl font-bold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Smartphone className="w-5 h-5" /> Login with Mobile
-                </button>
-              )}
-            </form>
-          )}
-
-          {!isResetting && (
-            <div className="mt-8 text-center text-sm text-slate-500 border-t border-gray-100 pt-6">
-              {isSignUp ? "Already have an account?" : "Don't have an account?"}
-              <button
-                onClick={() => { setIsSignUp(!isSignUp); setAuthError(''); }}
-                className="ml-2 text-blue-600 font-bold hover:underline"
-              >
-                {isSignUp ? "Login" : "Sign Up"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Dashboard View
-  if (view === 'dashboard' && user) {
-    return <Dashboard user={user} onLogout={handleLogout} />;
-  }
-
-  // Partner Login View
-  if (view === 'partners') {
-    return (
-      <PartnersLogin
+    if (view === 'service' && activeService) return (
+      <ServicePage
+        serviceName={activeService}
         onBack={() => setView('home')}
-        setUser={setUser}
-        setView={setView}
+        onBook={handleBookService}
       />
     );
-  }
 
-  // Public Home View
-  return (
-    <div className="min-h-screen bg-white font-inter text-slate-800 antialiased">
-      {/* ... [Rest of the Public Home View UI (Navbar, Hero, etc.) remains same] ... */}
-      {/* For brevity, I am keeping the structure but collapsing repeated parts. 
-          The ServicePage, Landing components, Navbar, etc. are already defined above 
-          and function within this App component structure. */}
-
-      {/* Top Bar */}
-      <div className="bg-[#0B2447] text-slate-300 text-xs py-2.5 px-4 md:px-8 flex justify-between items-center font-medium tracking-wide">
-        <div className="flex space-x-6">
-          <span className="flex items-center hover:text-white transition-colors cursor-pointer"><Phone className="w-3 h-3 mr-2 text-cyan-400" /> 044-4000-4000</span>
-          <span className="flex items-center hover:text-white transition-colors cursor-pointer"><Mail className="w-3 h-3 mr-2 text-cyan-400" /> help@uprafillings.com</span>
-        </div>
-        <div className="flex space-x-6">
-          <button onClick={() => setView('partners')} className="hover:text-white transition-colors text-cyan-400 font-bold">Partners</button>
-          <a href="#" className="hover:text-white transition-colors">Articles</a>
-          <a href="#" className="hover:text-white transition-colors">Nearest Office</a>
-        </div>
-      </div>
-
-      {/* Main Navbar */}
-      <nav
-        className={`sticky top-0 z-40 transition-all duration-500 ${isScrolled
-            ? 'bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 py-3'
-            : 'bg-white border-b border-gray-100 py-5'
-          }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between">
-          <div className="flex items-center space-x-10">
-            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => setView('home')}>
-              <Logo />
-            </div>
-            <div className="hidden xl:flex space-x-8">
-              {Object.keys(NAV_MENU).map((menu) => (
-                <div
-                  key={menu}
-                  className="relative group h-full flex items-center"
-                  onMouseEnter={() => setActiveMenu(menu)}
-                >
-                  <button
-                    onClick={() => handleNavClick(menu)}
-                    className={`flex items-center text-sm font-semibold py-2 transition-colors ${(view === 'startup' && menu === 'Startup') ||
-                        (view === 'mca' && menu === 'MCA') ||
-                        (view === 'compliance' && menu === 'Compliance') ||
-                        (view === 'global' && menu === 'Global') ||
-                        (view === 'registrations' && menu === 'Registrations') ||
-                        (view === 'trademark' && menu === 'Trademark') ||
-                        (view === 'gst' && menu === 'Goods & Services Tax') ||
-                        (view === 'incometax' && menu === 'Income Tax')
-                        ? 'text-blue-600' : 'text-slate-600 hover:text-blue-600'
-                      }`}
-                  >
-                    {menu} <ChevronDown className="w-3 h-3 ml-1.5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center bg-gray-50 border border-gray-200 rounded-full px-4 py-2.5 w-64 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
-              <Search className="w-4 h-4 text-gray-400 mr-2" />
-              <input
-                type="text"
-                placeholder="Search services..."
-                className="bg-transparent border-none outline-none text-sm w-full font-medium text-slate-700 placeholder:text-gray-400"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  handleSearchInput(e.target.value);
-                }}
-              />
-            </div>
-            <button
-              onClick={() => setView('login')}
-              className="hidden md:flex items-center px-6 py-2.5 bg-[#0B2447] text-white rounded-full font-bold text-sm hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              <User className="w-4 h-4 mr-2" /> Login
-            </button>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="xl:hidden p-2 text-slate-600">
-              {mobileMenuOpen ? <X /> : <Menu />}
-            </button>
-          </div>
-        </div>
-        <div onMouseLeave={() => setActiveMenu(null)}>
-          <MegaMenu
-            activeMenu={activeMenu}
-            closeMenu={() => setActiveMenu(null)}
-            onNavigate={handleNavClick}
-            onServiceClick={handleServiceClick}
-          />
-        </div>
-      </nav>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-white z-50 pt-24 px-6 overflow-y-auto xl:hidden animate-fade-in">
-          <div className="flex flex-col space-y-6 pb-20">
-            {Object.keys(NAV_MENU).map((menu) => (
-              <div key={menu} className="border-b border-gray-100 pb-4">
-                <button
-                  onClick={() => { handleNavClick(menu); setMobileMenuOpen(false); }}
-                  className="font-bold text-xl text-slate-900 mb-4 block w-full text-left flex justify-between items-center"
-                >
-                  {menu} <ChevronRight className="w-5 h-5 text-gray-400" />
-                </button>
-                <div className="pl-4 space-y-3">
-                  {NAV_MENU[menu].slice(0, 5).map((sub, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleServiceClick(sub.name)}
-                      className="block w-full text-left text-slate-500 font-medium py-1"
-                    >
-                      {sub.name}
-                    </button>
-                  ))}
-                  <button onClick={() => handleNavClick(menu)} className="text-blue-600 font-bold text-sm mt-2">View All...</button>
-                </div>
-              </div>
-            ))}
-            <button
-              onClick={() => setView('login')}
-              className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg mt-4 shadow-lg shadow-blue-300"
-            >
-              Login / Sign Up
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* VIEW CONTENT RENDERER */}
-      {view === 'home' && (
+    // Dynamic Landing Pages for Categories
+    switch (view) {
+      case 'startup': return <StartupLanding />;
+      case 'mca': return <MCALanding />;
+      case 'compliance': return <ComplianceLanding />;
+      case 'global': return <GlobalLanding />;
+      case 'registrations': return <RegistrationsLanding />;
+      case 'trademark': return <TrademarkLanding />;
+      case 'gst': return <GSTLanding />;
+      case 'incometax': return <IncomeTaxLanding />;
+      default: return (
         <HomeLanding
           filteredServices={filteredServices}
-          setShowModal={setShowModal}
-          searchQuery={searchQuery}
+          setShowModal={(s) => { setActiveService(s.title); setView('service'); }}
           setSearchQuery={setSearchQuery}
-          onNavigate={handleNavClick}
-          onSearchInput={handleSearchInput}
+          searchQuery={searchQuery}
+          onNavigate={(v) => {
+            if (['startup', 'mca', 'compliance', 'global', 'registrations', 'trademark', 'gst', 'incometax'].includes(v)) {
+              setView(v);
+            } else {
+              handleServiceClick(v);
+            }
+          }}
+          onSearchInput={setSearchQuery}
         />
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white font-inter text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+      {/* Navigation Bar */}
+      {view !== 'dashboard' && view !== 'partnerDashboard' && view !== 'partnerLogin' && (
+        <nav className={`fixed w-full z-40 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
+          <div className="max-w-7xl mx-auto px-4 flex justify-between items-center relative">
+            <div className="flex items-center gap-12">
+              <div onClick={() => setView('home')} className="cursor-pointer">
+                <Logo />
+              </div>
+
+              {/* Desktop Menu */}
+              <div className="hidden lg:flex items-center space-x-1">
+                {Object.keys(NAV_MENU).map((menu) => (
+                  <button
+                    key={menu}
+                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${activeMenu === menu ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-gray-50'}`}
+                    onMouseEnter={() => setActiveMenu(menu)}
+                    onClick={() => {
+                      if (menu === 'Startup') setView('startup');
+                      // ... simplistic mapping for click
+                    }}
+                  >
+                    {menu}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button onClick={() => setShowOTP(true)} className="hidden md:flex items-center gap-2 text-slate-700 font-bold hover:text-blue-600 transition-colors">
+                <span className="bg-slate-100 p-2 rounded-full"><Users className="w-4 h-4" /></span>
+                Login
+              </button>
+              <button
+                onClick={() => setView('partnerLogin')}
+                className="bg-slate-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-slate-800 transition-all hover:shadow-lg text-sm flex items-center"
+              >
+                For Partners <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+              {/* Mobile Menu Toggle would go here */}
+            </div>
+
+            {/* Mega Menu Overlay */}
+            <MegaMenu
+              activeMenu={activeMenu}
+              closeMenu={() => setActiveMenu(null)}
+              onNavigate={(v) => {
+                setView(v);
+                setActiveMenu(null);
+              }}
+              onServiceClick={handleServiceClick}
+            />
+          </div>
+        </nav>
       )}
 
-      {view === 'startup' && <StartupLanding onServiceClick={handleServiceClick} />}
-      {view === 'mca' && <MCALanding onServiceClick={handleServiceClick} />}
-      {view === 'compliance' && <ComplianceLanding onServiceClick={handleServiceClick} />}
-      {view === 'global' && <GlobalLanding onServiceClick={handleServiceClick} />}
-      {view === 'registrations' && <RegistrationsLanding onServiceClick={handleServiceClick} />}
-      {view === 'trademark' && <TrademarkLanding onServiceClick={handleServiceClick} />}
-      {view === 'gst' && <GSTLanding onServiceClick={handleServiceClick} />}
-      {view === 'incometax' && <IncomeTaxLanding onServiceClick={handleServiceClick} />}
-
-      {view === 'service' && (
-        <ServicePage
-          serviceName={selectedService}
-          onBack={() => setView('home')}
-        />
-      )}
+      {/* Main Content Area */}
+      <div className={`${(view !== 'dashboard' && view !== 'partnerDashboard' && view !== 'partnerLogin') ? 'pt-0' : ''}`}>
+        {renderContent()}
+      </div>
 
       {/* Footer */}
-      <footer className="bg-slate-50 pt-24 pb-12 border-t border-slate-200 text-sm font-medium text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
-          <div className="col-span-2 lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-6">
-              <Logo />
-            </div>
-            <p className="mb-8 leading-relaxed">
-              India's largest online business services platform dedicated to helping people start and grow their business, at an affordable cost.
-            </p>
-            {/* ... Social icons ... */}
-            <div className="flex space-x-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer shadow-sm">
-                  <Globe className="w-4 h-4" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-bold text-slate-900 mb-6 text-base">Start A Business</h4>
-            <ul className="space-y-3">
-              <li><button onClick={() => handleServiceClick('Proprietorship')} className="hover:text-blue-600 transition-colors">Proprietorship</button></li>
-              <li><button onClick={() => handleServiceClick('Partnership')} className="hover:text-blue-600 transition-colors">Partnership</button></li>
-              <li><button onClick={() => handleServiceClick('Private Limited Company')} className="hover:text-blue-600 transition-colors">Private Limited</button></li>
-              <li><button onClick={() => handleServiceClick('LLP Registration')} className="hover:text-blue-600 transition-colors">LLP Registration</button></li>
-              <li><button onClick={() => handleServiceClick('One Person Company')} className="hover:text-blue-600 transition-colors">One Person Company</button></li>
-            </ul>
-          </div>
-
-          {/* ... Other Footer Columns (Registrations, Compliance, Tools) - Using existing logic ... */}
-          {/* Collapsed for brevity as they are repetitive, but functional in full code */}
-          <div>
-            <h4 className="font-bold text-slate-900 mb-6 text-base">Tools</h4>
-            <ul className="space-y-3">
-              <li><button onClick={() => handleServiceClick('GST Calculator')} className="hover:text-blue-600 transition-colors">GST Calculator</button></li>
-              <li><button onClick={() => handleServiceClick('Business Search')} className="hover:text-blue-600 transition-colors">Business Search</button></li>
-              <li><button onClick={() => handleServiceClick('Trademark Search')} className="hover:text-blue-600 transition-colors">Trademark Search</button></li>
-              <li><button onClick={() => handleServiceClick('HSN Code Finder')} className="hover:text-blue-600 transition-colors">HSN Code Finder</button></li>
-              <li><button onClick={() => handleServiceClick('LEDGERS Software')} className="hover:text-blue-600 transition-colors">LEDGERS Software</button></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 border-t border-gray-200 pt-10 flex flex-col md:flex-row justify-between items-center text-slate-400">
-          <p>&copy; 2026 UPRA fillings Private Limited. All rights reserved.</p>
-          <div className="flex space-x-8 mt-4 md:mt-0 font-semibold">
-            <a href="#" className="hover:text-slate-900 transition-colors">Terms</a>
-            <a href="#" className="hover:text-slate-900 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-slate-900 transition-colors">Refund Policy</a>
-          </div>
-        </div>
-      </footer>
-
-      {/* Service Detail Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl transform transition-all scale-100">
-            <div className="flex justify-between items-start mb-8">
-              <div className="flex items-center space-x-5">
-                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
-                  <showModal.icon className="w-7 h-7 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-extrabold text-slate-900">{showModal.title}</h3>
-                  <p className="text-blue-600 font-bold text-lg">{showModal.price}</p>
+      {view !== 'dashboard' && view !== 'partnerDashboard' && (
+        <footer className="bg-white border-t border-gray-200 pt-20 pb-10">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
+              <div className="col-span-2 lg:col-span-2">
+                <Logo className="mb-6" />
+                <p className="text-slate-500 text-sm leading-relaxed mb-6 max-w-sm">
+                  India's most trusted digital platform for legal, tax, and compliance services. We help entrepreneurs start, manage, and grow their business.
+                </p>
+                <div className="flex space-x-4">
+                  {/* Social Icons */}
+                  {[1, 2, 3, 4].map(i => <div key={i} className="w-8 h-8 bg-gray-100 rounded-full hover:bg-blue-600 transition-colors"></div>)}
                 </div>
               </div>
-              <button onClick={() => setShowModal(null)} className="text-gray-400 hover:text-gray-600 hover:rotate-90 transition-all">
-                <X className="w-6 h-6" />
-              </button>
+
+              <div>
+                <h4 className="font-bold text-slate-900 mb-6">Startups</h4>
+                <ul className="space-y-4 text-sm text-slate-500">
+                  <li className="hover:text-blue-600 cursor-pointer">Private Limited</li>
+                  <li className="hover:text-blue-600 cursor-pointer">LLP Registration</li>
+                  <li className="hover:text-blue-600 cursor-pointer">One Person Company</li>
+                  <li className="hover:text-blue-600 cursor-pointer">Nidhi Company</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 mb-6">Intellectual Property</h4>
+                <ul className="space-y-4 text-sm text-slate-500">
+                  <li className="hover:text-blue-600 cursor-pointer">Trademark Registration</li>
+                  <li className="hover:text-blue-600 cursor-pointer">Copyright</li>
+                  <li className="hover:text-blue-600 cursor-pointer">Patent Filing</li>
+                  <li className="hover:text-blue-600 cursor-pointer">Design Registration</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 mb-6">Contact</h4>
+                <ul className="space-y-4 text-sm text-slate-500">
+                  <li>help@uprafilings.com</li>
+                  <li>+91 98765 43210</li>
+                  <li>HSR Layout, Bangalore</li>
+                </ul>
+              </div>
             </div>
 
-            <p className="text-slate-600 mb-8 leading-relaxed text-lg">
-              Start your {showModal.title} process completely online. Our experts will guide you through every step of the way, ensuring compliance and peace of mind.
-            </p>
-            {/* ... Modal content ... */}
-            <div className="flex space-x-4">
-              <button
-                onClick={() => { setShowModal(null); setView('login'); }}
-                className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
-              >
-                Buy Now
-              </button>
-              <button
-                onClick={() => setShowModal(null)}
-                className="flex-1 bg-white border-2 border-gray-100 text-slate-700 py-4 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-200 transition-all"
-              >
-                Learn More
-              </button>
+            <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-sm text-slate-400">© 2024 UPRA Filings Technologies Pvt Ltd. All rights reserved.</p>
+              <div className="flex space-x-6 text-sm text-slate-400">
+                <span className="hover:text-slate-600 cursor-pointer">Privacy Policy</span>
+                <span className="hover:text-slate-600 cursor-pointer">Terms of Service</span>
+              </div>
             </div>
           </div>
-        </div>
+        </footer>
       )}
 
-      {/* Sticky Bottom Bar for Mobile */}
-      <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 p-3 md:hidden flex justify-between items-center z-40 pb-safe">
-        <div className="flex flex-col items-center flex-1 text-blue-600">
-          <Home className="w-6 h-6 mb-1" />
-          <span className="text-[10px] font-bold">Home</span>
-        </div>
-        <div className="flex flex-col items-center flex-1 text-gray-400" onClick={() => setView('login')}>
-          <LayoutGrid className="w-6 h-6 mb-1" />
-          <span className="text-[10px] font-medium">Dashboard</span>
-        </div>
-        <div className="flex flex-col items-center flex-1 text-gray-400">
-          <Phone className="w-6 h-6 mb-1" />
-          <span className="text-[10px] font-medium">Contact</span>
-        </div>
-        <div className="flex-1">
-          <button className="w-full bg-slate-900 text-white py-3 rounded-xl text-xs font-bold shadow-lg">
-            Get Started
-          </button>
-        </div>
-      </div>
+      {/* Login Modal */}
+      {showOTP && <OTPModal onClose={() => setShowOTP(false)} />}
+
+      {/* App-wide Infinite Grid Background for aesthetic if needed, disabled for cleanliness in main layout */}
+      {/* <InfiniteGrid /> */}
     </div>
   );
 };
