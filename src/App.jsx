@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -26,26 +27,21 @@ function cn(...inputs) {
 }
 
 // --- FIREBASE CONFIGURATION ---
-// 🔴 REPLACE THESE VALUES WITH YOUR KEYS FROM FIREBASE CONSOLE
+// --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBIKIbQvBUNOGHY3qO-pS7Y6i6KT4JDw6U",
+  authDomain: "upra-filings.firebaseapp.com",
+  projectId: "upra-filings",
+  storageBucket: "upra-filings.firebasestorage.app",
+  messagingSenderId: "628753511218",
+  appId: "1:628753511218:web:5fe5825d1a058537815d2b",
+  measurementId: "G-E87FQ7KHQ2"
 };
 
 // Initialize Firebase
-let auth = null;
-if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
-  try {
-    const app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-  } catch (error) {
-    console.log("Firebase not initialized. Using Demo Mode.");
-  }
-}
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
 
 // --- CONSTANTS & DATA MAPPING ---
 const SERVICE_PROFESSION_MAP = {
