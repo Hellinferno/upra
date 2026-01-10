@@ -21,6 +21,27 @@ import {
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+// --- Import Page Components ---
+import HomeLanding from './pages/HomeLanding';
+import ServicePage from './pages/ServicePage';
+import Dashboard from './pages/Dashboard';
+import PartnerDashboard from './pages/PartnerDashboard';
+import PartnersLogin from './pages/PartnersLogin';
+import {
+  StartupLanding,
+  MCALanding,
+  ComplianceLanding,
+  GlobalLanding,
+  RegistrationsLanding,
+  TrademarkLanding,
+  GSTLanding,
+  IncomeTaxLanding
+} from './pages/CategoryLandings';
+
+// --- Import Reusable Components ---
+import MegaMenu from './components/MegaMenu';
+import OTPModal from './components/OTPModal';
+
 // --- UTILITIES ---
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -720,20 +741,316 @@ const ServiceCard = ({ service, onClick }) => {
   );
 };
 
-// The rest of the file continues with the same pattern...
-// Due to the extreme length, I'm creating a truncated version and will continue with git operations
+// --- Main App Component ---
+const App = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState('home');
+  const [selectedService, setSelectedService] = useState(null);
+  const [user, setUser] = useState(null);
+  const [showModal, setShowModal] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [orders, setOrders] = useState([]);
 
-export default function App() {
-  return (
-    <div className="min-h-screen bg-white font-inter text-slate-800 antialiased flex items-center justify-center">
-      <div className="text-center p-8">
-        <Logo />
-        <h1 className="text-4xl font-bold mt-8 mb-4">UPRA Filings</h1>
-        <p className="text-lg text-slate-600 mb-8">Your complete business registration platform</p>
-        <p className="text-sm text-amber-600 bg-amber-50 p-4 rounded-lg">
-          ⚠️ Firebase Demo Mode Active - Replace API keys in code to enable full functionality
-        </p>
+  // Auth state
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+
+  // Auth Listener with timeout
+  useEffect(() => {
+    let mounted = true;
+    const timeoutFn = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("Auth timeout - fallback to guest mode");
+        setLoading(false);
+      }
+    }, 3000);
+
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+
+    if (auth) {
+      try {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (!mounted) return;
+          if (currentUser) {
+            setUser({
+              name: currentUser.displayName || "User",
+              email: currentUser.email,
+              uid: currentUser.uid
+            });
+          } else {
+            setUser(null);
+          }
+          setLoading(false);
+        });
+        return () => {
+          mounted = false;
+          clearTimeout(timeoutFn);
+          window.removeEventListener('scroll', handleScroll);
+          unsubscribe();
+        };
+      } catch (err) {
+        console.error("Auth error:", err);
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutFn);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Handlers
+  const handleBookService = (orderDetails) => {
+    const newOrder = { ...orderDetails, id: Date.now(), assignedPartner: null };
+    setOrders([newOrder, ...orders]);
+    if (!user) {
+      setUser({ name: orderDetails.fullName, email: orderDetails.email, isPartner: false });
+    }
+    setView('dashboard');
+  };
+
+  const handleAcceptOrder = (order) => {
+    setOrders(orders.map(o =>
+      o.id === order.id ? { ...o, status: 'In Progress', assignedPartner: user.name } : o
+    ));
+  };
+
+  const handleSubmitWork = (order) => {
+    setOrders(orders.map(o =>
+      o.id === order.id ? { ...o, status: 'Completed' } : o
+    ));
+    alert("Work submitted!");
+  };
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (!auth) {
+      // Demo mode login
+      setUser({ name: name || "Demo User", email: email, isPartner: false });
+      setView('dashboard');
+      return;
+    }
+
+    try {
+      if (isSignUp) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+        setUser({ name: name, email: email });
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        setUser({ name: userCredential.user.displayName || "User", email: userCredential.user.email });
+      }
+      setView('dashboard');
+    } catch (error) {
+      if (error.code?.includes('api-key')) {
+        // Fallback to demo mode
+        setUser({ name: name || "Demo User", email: email, isPartner: false });
+        setView('dashboard');
+      } else {
+        setAuthError(error.message.replace("Firebase: ", ""));
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    if (auth) await signOut(auth).catch(() => { });
+    setUser(null);
+    setView('home');
+  };
+
+  const handleServiceClick = (serviceName) => {
+    setSelectedService(serviceName);
+    setView('service');
+    setMobileMenuOpen(false);
+  };
+
+  const handleNavClick = (menuName) => {
+    const viewMap = {
+      'Startup': 'startup', 'MCA': 'mca', 'Compliance': 'compliance',
+      'Global': 'global', 'Registrations': 'registrations', 'Trademark': 'trademark',
+      'Goods & Services Tax': 'gst', 'Income Tax': 'incometax'
+    };
+    setView(viewMap[menuName] || 'home');
+  };
+
+  const filteredServices = searchQuery
+    ? POPULAR_SERVICES.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : POPULAR_SERVICES;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <Logo />
+          <p className="mt-4 text-slate-500">Loading...</p>
+        </div>
       </div>
+    );
+  }
+
+  // Login View
+  if (view === 'login') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-inter">
+        {showOTPModal && <OTPModal onClose={() => setShowOTPModal(false)} />}
+        <div className="bg-white w-full max-w-md p-10 rounded-3xl shadow-2xl border border-gray-100 relative">
+          <button onClick={() => setView('home')} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-extrabold text-slate-900">{isSignUp ? "Create Account" : "Welcome Back"}</h2>
+            <p className="text-slate-500 mt-2">{isSignUp ? "Sign up to get started" : "Sign in to access your dashboard"}</p>
+            {isDemoMode && <p className="text-xs text-amber-600 mt-2 bg-amber-50 p-2 rounded">Demo Mode Active</p>}
+          </div>
+          {authError && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{authError}</div>}
+          <form onSubmit={handleAuth} className="space-y-6">
+            {isSignUp && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
+                <input type="text" required className="w-full px-5 py-3 border border-gray-200 rounded-xl" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+              <input type="email" required className="w-full px-5 py-3 border border-gray-200 rounded-xl" placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
+              <input type="password" required className="w-full px-5 py-3 border border-gray-200 rounded-xl" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
+            <button type="submit" className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700">{isSignUp ? "Sign Up" : "Login"}</button>
+          </form>
+          <div className="mt-6 text-center">
+            <button onClick={() => setIsSignUp(!isSignUp)} className="text-blue-600 font-bold">{isSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up"}</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Dashboard Views
+  if (view === 'dashboard' && user) {
+    return <Dashboard user={user} onLogout={handleLogout} orders={orders} />;
+  }
+  if (view === 'partnerDashboard' && user?.isPartner) {
+    return <PartnerDashboard user={user} onLogout={handleLogout} orders={orders} onAcceptOrder={handleAcceptOrder} onSubmitWork={handleSubmitWork} />;
+  }
+  if (view === 'partners') {
+    return <PartnersLogin onBack={() => setView('home')} setUser={setUser} setView={setView} />;
+  }
+  if (view === 'service') {
+    return <ServicePage serviceName={selectedService} onBack={() => setView('home')} onBook={handleBookService} />;
+  }
+
+  // Main Public View
+  return (
+    <div className="min-h-screen bg-white font-inter text-slate-800 antialiased">
+      {/* Top Bar */}
+      <div className="bg-[#0B2447] text-slate-300 text-xs py-2.5 px-4 md:px-8 flex justify-between items-center">
+        <div className="flex space-x-6">
+          <span className="flex items-center"><Phone className="w-3 h-3 mr-2 text-cyan-400" /> 044-4000-4000</span>
+          <span className="flex items-center"><Mail className="w-3 h-3 mr-2 text-cyan-400" /> help@uprafillings.com</span>
+        </div>
+        <div className="flex space-x-6">
+          <button onClick={() => setView('partners')} className="text-cyan-400 font-bold">Partners</button>
+        </div>
+      </div>
+
+      {/* Main Navbar */}
+      <nav className={`sticky top-0 z-40 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-lg py-3' : 'bg-white border-b border-gray-100 py-5'}`}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between">
+          <div className="flex items-center space-x-10">
+            <div className="cursor-pointer" onClick={() => setView('home')}><Logo /></div>
+            <div className="hidden xl:flex space-x-8">
+              {Object.keys(NAV_MENU).map((menu) => (
+                <div key={menu} className="relative group" onMouseEnter={() => setActiveMenu(menu)}>
+                  <button onClick={() => handleNavClick(menu)} className="flex items-center text-sm font-semibold py-2 text-slate-600 hover:text-blue-600">
+                    {menu} <ChevronDown className="w-3 h-3 ml-1.5 opacity-50" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center bg-gray-50 border border-gray-200 rounded-full px-4 py-2.5 w-64">
+              <Search className="w-4 h-4 text-gray-400 mr-2" />
+              <input type="text" placeholder="Search services..." className="bg-transparent border-none outline-none text-sm w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            </div>
+            <button onClick={() => setView('login')} className="hidden md:flex items-center px-6 py-2.5 bg-[#0B2447] text-white rounded-full font-bold text-sm hover:bg-slate-800">
+              <User className="w-4 h-4 mr-2" /> Login
+            </button>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="xl:hidden p-2 text-slate-600">
+              {mobileMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
+        </div>
+        <div onMouseLeave={() => setActiveMenu(null)}>
+          <MegaMenu activeMenu={activeMenu} closeMenu={() => setActiveMenu(null)} onNavigate={handleNavClick} onServiceClick={handleServiceClick} />
+        </div>
+      </nav>
+
+      {/* Content */}
+      {view === 'home' && <HomeLanding filteredServices={filteredServices} setShowModal={setShowModal} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onNavigate={handleNavClick} onSearchInput={(v) => setSearchQuery(v)} />}
+      {view === 'startup' && <StartupLanding onServiceClick={handleServiceClick} />}
+      {view === 'mca' && <MCALanding onServiceClick={handleServiceClick} />}
+      {view === 'compliance' && <ComplianceLanding onServiceClick={handleServiceClick} />}
+      {view === 'global' && <GlobalLanding onServiceClick={handleServiceClick} />}
+      {view === 'registrations' && <RegistrationsLanding onServiceClick={handleServiceClick} />}
+      {view === 'trademark' && <TrademarkLanding onServiceClick={handleServiceClick} />}
+      {view === 'gst' && <GSTLanding onServiceClick={handleServiceClick} />}
+      {view === 'incometax' && <IncomeTaxLanding onServiceClick={handleServiceClick} />}
+
+      {/* Footer */}
+      <footer className="bg-slate-50 pt-24 pb-12 border-t border-slate-200 text-sm text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <Logo />
+          <p className="mt-4">&copy; 2026 UPRA Filings Private Limited. All rights reserved.</p>
+        </div>
+      </footer>
+
+      {/* Service Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex items-center space-x-5">
+                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
+                  <showModal.icon className="w-7 h-7 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-extrabold text-slate-900">{showModal.title}</h3>
+                  <p className="text-blue-600 font-bold text-lg">{showModal.price}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+            </div>
+            <p className="text-slate-600 mb-8">Start your {showModal.title} process completely online.</p>
+            <div className="flex space-x-4">
+              <button onClick={() => { setShowModal(null); handleServiceClick(showModal.title); }} className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold">Get Started</button>
+              <button onClick={() => setShowModal(null)} className="flex-1 bg-white border-2 border-gray-100 text-slate-700 py-4 rounded-xl font-bold">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default App;
