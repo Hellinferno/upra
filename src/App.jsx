@@ -54,29 +54,56 @@ const App = () => {
 
   // Auth Listener
   useEffect(() => {
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          // In a real app, fetch role from DB. For now, assume 'user' unless otherwise specified.
-          // If we came from PartnerLogin (demo), we manually set user.
-          // If it's real Firebase auth, we might lack 'role'.
-          // We'll default to current state's role logic if preserved, or 'user'.
-          setUser(prev => ({
-            uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            role: (prev && prev.role) || 'user',
-            photoURL: currentUser.photoURL
-          }));
-        } else {
-          setUser(null);
-        }
+    let mounted = true;
+
+    // Safety timeout to prevent infinite loading if Firebase hangs
+    const timeoutFn = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("Firebase auth listener timed out. Fallback to guest mode.");
         setLoading(false);
-      });
-      return () => unsubscribe();
+      }
+    }, 5000);
+
+    if (auth) {
+      try {
+        const unsubscribe = onAuthStateChanged(auth,
+          (currentUser) => {
+            if (!mounted) return;
+            if (currentUser) {
+              setUser(prev => ({
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName,
+                role: (prev && prev.role) || 'user',
+                photoURL: currentUser.photoURL
+              }));
+            } else {
+              setUser(null);
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Firebase Auth Error:", error);
+            if (mounted) setLoading(false);
+          }
+        );
+        return () => {
+          mounted = false;
+          clearTimeout(timeoutFn);
+          unsubscribe();
+        };
+      } catch (err) {
+        console.error("Failed to attach auth listener:", err);
+        if (mounted) setLoading(false);
+      }
     } else {
       setLoading(false);
     }
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutFn);
+    };
   }, []);
 
   const handleLogout = async () => {
