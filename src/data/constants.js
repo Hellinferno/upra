@@ -1,6 +1,11 @@
 import {
-    Rocket, FileText, Award, Calculator, Percent, Building, Shield, Globe,
-    Briefcase, FileCheck, CheckCircle
+    Search, Menu, X, ChevronDown, ChevronRight, CheckCircle,
+    Shield, User, FileText, Briefcase, Calculator,
+    Phone, Mail, Globe, Lock, Bell, LayoutGrid,
+    CreditCard, FileCheck, Home, Users, Building,
+    Rocket, Award, HelpCircle, ArrowRight, ArrowLeft, Star,
+    Plane, Scale, FileSpreadsheet, Percent, Landmark, Quote, Plus, Minus, Smartphone, Key, Briefcase as BriefcaseIcon, UploadCloud, Download,
+    Info, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 
 export const SERVICE_PROFESSION_MAP = {

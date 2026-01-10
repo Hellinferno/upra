@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Info, ThumbsUp, CheckCircle, ThumbsDown, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
 import { SERVICE_DETAILS } from '../data/constants';
 
 const ServicePage = ({ serviceName, onBack, onBook }) => {
@@ -67,6 +67,15 @@ const ServicePage = ({ serviceName, onBack, onBook }) => {
                             >
                                 Book Now
                             </button>
+                            <div className="flex items-center text-slate-600 px-4">
+                                <Star className="w-5 h-5 text-yellow-400 fill-current mr-2" />
+                                <span className="font-bold mr-1">4.8/5</span> Rating
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-6 text-sm text-slate-500">
+                            <span className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" /> 100% Online Process</span>
+                            <span className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" /> Expert Support</span>
                         </div>
                     </div>
 
@@ -82,6 +91,10 @@ const ServicePage = ({ serviceName, onBack, onBook }) => {
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">YOUR NAME</label>
                                             <input required type="text" className="w-full p-2 border rounded" value={formData.fullName} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 mb-1">EMAIL</label>
+                                            <input required type="email" className="w-full p-2 border rounded" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                         </div>
                                         <button className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">
                                             Pay & Submit Order
@@ -103,26 +116,45 @@ const ServicePage = ({ serviceName, onBack, onBook }) => {
                                 </>
                             )}
                         </div>
+                        <div className="absolute top-10 -right-10 w-full h-full bg-blue-600/5 rounded-2xl -z-10"></div>
                     </div>
                 </div>
             </section>
 
-            {content.whatIs && (
+            {/* What Is & Requirements Section */}
+            {(content.whatIs || content.requirements) && (
                 <section className="py-16 px-4 bg-slate-50">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                <Info className="w-6 h-6 text-blue-600" />
+                    <div className="max-w-4xl mx-auto space-y-12">
+                        {content.whatIs && (
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                    <Info className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-4">What is it?</h2>
+                                    <p className="text-slate-600 leading-relaxed text-lg">{content.whatIs}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-slate-900 mb-4">What is it?</h2>
-                                <p className="text-slate-600 leading-relaxed text-lg">{content.whatIs}</p>
+                        )}
+
+                        {content.requirements && (
+                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                                <h3 className="text-xl font-bold text-slate-900 mb-6">Eligibility & Requirements</h3>
+                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {content.requirements.map((req, i) => (
+                                        <li key={i} className="flex items-start text-slate-600 text-sm">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 mr-3 shrink-0"></div>
+                                            {req}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </section>
             )}
 
+            {/* Pros and Cons */}
             {(content.pros.length > 0 || content.cons.length > 0) && (
                 <section className="py-16 px-4 bg-white border-t border-slate-100">
                     <div className="max-w-6xl mx-auto">

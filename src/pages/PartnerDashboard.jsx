@@ -13,7 +13,7 @@ const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork 
     );
 
     const myActiveJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'In Progress');
-    // const myCompletedJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'Completed');
+    const myCompletedJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'Completed');
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-inter">

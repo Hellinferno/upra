@@ -10,7 +10,7 @@ const Dashboard = ({ user, onLogout, orders }) => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-inter">
-            {/* Sidebar - Assuming simplistic sidebar here or reusing one if componentized. Logic copied from App.jsx */}
+            {/* Sidebar */}
             <div className="w-72 bg-slate-900 text-white hidden md:flex flex-col shadow-2xl z-20">
                 <div className="p-6 border-b border-slate-800"><span className="font-bold text-xl">CLIENT PANEL</span></div>
                 <nav className="flex-1 py-8 px-4 space-y-2">

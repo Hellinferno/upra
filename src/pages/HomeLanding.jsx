@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { Search, CheckCircle } from 'lucide-react';
-import { HOME_CATEGORIES, STATS } from '../data/constants';
+import { Search, Rocket, FileText, Award, Calculator, Percent, Building, Shield, Globe, CheckCircle, Quote, Plus, Minus, ArrowLeft, ArrowRight, X } from 'lucide-react';
+import { HOME_CATEGORIES, POPULAR_SERVICES, STATS } from '../data/constants';
 import ServiceCard from '../components/ServiceCard';
 import TestimonialSection from '../components/TestimonialSection';
 import FAQSection from '../components/FAQSection';
@@ -91,6 +91,8 @@ const HomeLanding = ({ filteredServices, setShowModal, setSearchQuery, searchQue
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {HOME_CATEGORIES.map((cat) => {
                             const Icon = cat.icon;
+                            // Map string icons to components if needed, or assume they are passed as components
+                            // In constants.js we imported the components directly so they should be fine.
                             return (
                                 <div
                                     key={cat.id}

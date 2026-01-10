@@ -17,8 +17,6 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
     const [state, setState] = useState('');
 
     const [error, setError] = useState('');
-
-    // New state for password reset
     const [isResetting, setIsResetting] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
 
@@ -26,10 +24,9 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
         e.preventDefault();
         setError('');
 
-        // If auth is not initialized (e.g. invalid config), fallback to demo mode logic locally if relevant, 
-        // but here we depend on auth being potentially null.
+        // Fallback to Demo Mode logic
         if (!auth) {
-            console.log("Firebase auth not initialized, running in demo mode.");
+            // --- MOCK LOGIN FOR DEMO IF FIREBASE NOT CONFIGURED ---
             const mockUser = {
                 name: isSignUp ? fullName : "Demo Partner",
                 email: email,
@@ -69,8 +66,21 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
             }
             setView('partnerDashboard');
         } catch (err) {
-            console.error(err);
-            setError(err.message.replace("Firebase: ", ""));
+            // Handle invalid API key by falling back to demo mode
+            if (err.code === 'auth/api-key-not-valid' || err.message.includes('api-key-not-valid')) {
+                console.warn("API Key invalid or restricted. Switching to Demo Mode for Partner.");
+                const mockUser = {
+                    name: isSignUp ? fullName : "Demo Partner",
+                    email: email,
+                    isPartner: true,
+                    profession: isSignUp ? profession : "CA",
+                    uid: "partner_" + Date.now()
+                };
+                setUser(mockUser);
+                setView('partnerDashboard');
+            } else {
+                setError(err.message.replace("Firebase: ", ""));
+            }
         }
     };
 
@@ -80,7 +90,9 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
         if (!resetEmail) return setError("Please enter your email address.");
 
         if (!auth) {
-            setError("Firebase configuration missing/invalid for reset.");
+            alert("Demo Mode: Password reset email sent (simulation).");
+            setIsResetting(false);
+            setResetEmail('');
             return;
         }
 
@@ -90,7 +102,12 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
             setIsResetting(false);
             setResetEmail('');
         } catch (err) {
-            setError(err.message.replace("Firebase: ", ""));
+            if (err.code === 'auth/api-key-not-valid') {
+                alert("Demo Mode: Password reset email sent (simulation).");
+                setIsResetting(false);
+            } else {
+                setError(err.message.replace("Firebase: ", ""));
+            }
         }
     };
 
