@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
-import { SERVICE_DETAILS } from '../data/constants';
+import { SERVICE_DETAILS } from '../data/servicesData';
 
-const ServicePage = ({ serviceName, onBack, onBook }) => {
+const ServicePage = ({ onBook }) => {
+    const { serviceName: rawServiceName } = useParams();
+    const serviceName = decodeURIComponent(rawServiceName);
+    const navigate = useNavigate();
     const details = SERVICE_DETAILS[serviceName];
     const content = details || {
         title: serviceName,
@@ -39,7 +43,7 @@ const ServicePage = ({ serviceName, onBack, onBook }) => {
             <div className="bg-slate-50 border-b border-gray-200 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 py-4">
                     <button
-                        onClick={onBack}
+                        onClick={() => navigate('/')}
                         className="flex items-center text-slate-500 hover:text-blue-600 text-sm font-medium transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Services

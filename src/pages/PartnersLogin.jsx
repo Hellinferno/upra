@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { X, Briefcase as BriefcaseIcon } from 'lucide-react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 
-const PartnersLogin = ({ onBack, setUser, setView }) => {
+const PartnersLogin = ({ setUser }) => {
+    const navigate = useNavigate();
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -35,7 +34,8 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
                 uid: "partner_" + Date.now()
             };
             setUser(mockUser);
-            setView('partnerDashboard'); // New specific dashboard
+            setUser(mockUser);
+            navigate('/partner-dashboard'); // New specific dashboard
             return;
         }
 
@@ -64,7 +64,7 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
                     uid: userCredential.user.uid
                 });
             }
-            setView('partnerDashboard');
+            navigate('/partner-dashboard');
         } catch (err) {
             // Handle invalid API key by falling back to demo mode
             if (err.code === 'auth/api-key-not-valid' || err.message.includes('api-key-not-valid')) {
@@ -77,7 +77,7 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
                     uid: "partner_" + Date.now()
                 };
                 setUser(mockUser);
-                setView('partnerDashboard');
+                navigate('/partner-dashboard');
             } else {
                 setError(err.message.replace("Firebase: ", ""));
             }
@@ -114,7 +114,7 @@ const PartnersLogin = ({ onBack, setUser, setView }) => {
     return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-inter">
             <div className={`bg-white w-full ${isSignUp ? 'max-w-2xl' : 'max-w-md'} p-10 rounded-3xl shadow-2xl border border-gray-100 relative transition-all duration-300`}>
-                <button onClick={onBack} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                <button onClick={() => navigate('/')} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
                     <X className="w-5 h-5" />
                 </button>
 

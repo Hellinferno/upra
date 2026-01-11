@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Building, FileText, Shield, Globe, Award, Calculator, Percent } from 'lucide-react';
 import { NAV_MENU } from '../data/constants';
 import ServiceCard from '../components/ServiceCard';
@@ -7,58 +8,64 @@ import FAQSection from '../components/FAQSection';
 // Shared Components or Reuse logic?
 // Just duplicate structure for simplicity as per user code structure
 
-export const StartupLanding = ({ onServiceClick }) => (
-    <div className="animate-slide-in bg-white font-inter">
-        {/* Startup Hero */}
-        <section className="bg-slate-900 text-white pt-32 pb-40 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-600/10 skew-x-12 translate-x-20"></div>
-            <div className="max-w-7xl mx-auto px-4 relative z-10">
-                <div className="max-w-3xl">
-                    <div className="inline-block bg-blue-600/20 backdrop-blur-md text-blue-300 text-xs font-bold px-4 py-2 rounded-full mb-8 border border-blue-500/30 uppercase tracking-wider">
-                        #1 Platform for Startups
-                    </div>
-                    <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
-                        Turn Your Idea Into a <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Registered Business.</span>
-                    </h1>
-                    <p className="text-xl text-slate-400 mb-10 max-w-2xl leading-relaxed">
-                        From company registration to IP protection and fundraising, UPRA Fillings is your trusted partner in the startup journey. Join thousands of founders who started here.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-5">
-                        <button className="bg-blue-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg shadow-blue-900/50">
-                            Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
-                        </button>
-                        <button className="bg-white/5 backdrop-blur-sm text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">
-                            Talk to an Expert
-                        </button>
+export const StartupLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
+    return (
+        <div className="animate-slide-in bg-white font-inter">
+            {/* Startup Hero */}
+            <section className="bg-slate-900 text-white pt-32 pb-40 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-600/10 skew-x-12 translate-x-20"></div>
+                <div className="max-w-7xl mx-auto px-4 relative z-10">
+                    <div className="max-w-3xl">
+                        <div className="inline-block bg-blue-600/20 backdrop-blur-md text-blue-300 text-xs font-bold px-4 py-2 rounded-full mb-8 border border-blue-500/30 uppercase tracking-wider">
+                            #1 Platform for Startups
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
+                            Turn Your Idea Into a <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Registered Business.</span>
+                        </h1>
+                        <p className="text-xl text-slate-400 mb-10 max-w-2xl leading-relaxed">
+                            From company registration to IP protection and fundraising, UPRA Fillings is your trusted partner in the startup journey. Join thousands of founders who started here.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-5">
+                            <button className="bg-blue-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg shadow-blue-900/50">
+                                Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
+                            </button>
+                            <button className="bg-white/5 backdrop-blur-sm text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10">
+                                Talk to an Expert
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20 rounded-t-[3rem]">
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {NAV_MENU.Startup.map((item, idx) => (
-                        <ServiceCard
-                            key={idx}
-                            service={{
-                                title: item.name,
-                                desc: "Comprehensive startup registration services with expert guidance.",
-                                icon: Building,
-                                price: "Enquire"
-                            }}
-                            onClick={() => onServiceClick(item.name)}
-                        />
-                    ))}
+            <section className="py-24 bg-gray-50 px-4 -mt-20 relative z-20 rounded-t-[3rem]">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {NAV_MENU.Startup.map((item, idx) => (
+                            <ServiceCard
+                                key={idx}
+                                service={{
+                                    title: item.name,
+                                    desc: "Comprehensive startup registration services with expert guidance.",
+                                    icon: Building,
+                                    price: "Enquire"
+                                }}
+                                onClick={() => onServiceClick(item.name)}
+                            />
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </section>
-        <FAQSection />
-    </div>
-);
+            </section>
+            <FAQSection />
+        </div>
+    );
+};
 
-export const MCALanding = ({ onServiceClick }) => {
+export const MCALanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
@@ -105,7 +112,9 @@ export const MCALanding = ({ onServiceClick }) => {
     );
 };
 
-export const ComplianceLanding = ({ onServiceClick }) => {
+export const ComplianceLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
@@ -152,7 +161,9 @@ export const ComplianceLanding = ({ onServiceClick }) => {
     );
 };
 
-export const GlobalLanding = ({ onServiceClick }) => {
+export const GlobalLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
@@ -199,7 +210,9 @@ export const GlobalLanding = ({ onServiceClick }) => {
     );
 };
 
-export const RegistrationsLanding = ({ onServiceClick }) => {
+export const RegistrationsLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
@@ -246,7 +259,9 @@ export const RegistrationsLanding = ({ onServiceClick }) => {
     );
 };
 
-export const TrademarkLanding = ({ onServiceClick }) => {
+export const TrademarkLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
@@ -293,7 +308,9 @@ export const TrademarkLanding = ({ onServiceClick }) => {
     );
 };
 
-export const GSTLanding = ({ onServiceClick }) => {
+export const GSTLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">
@@ -340,7 +357,9 @@ export const GSTLanding = ({ onServiceClick }) => {
     );
 };
 
-export const IncomeTaxLanding = ({ onServiceClick }) => {
+export const IncomeTaxLanding = () => {
+    const navigate = useNavigate();
+    const onServiceClick = (name) => navigate(`/service/${encodeURIComponent(name)}`);
     return (
         <div className="animate-slide-in bg-white">
             <section className="bg-slate-900 text-white pt-24 pb-32 relative overflow-hidden">

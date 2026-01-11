@@ -1,12 +1,23 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Search, Rocket, FileText, Award, Calculator, Percent, Building, Shield, Globe, CheckCircle, Quote, Plus, Minus, ArrowLeft, ArrowRight, X } from 'lucide-react';
-import { HOME_CATEGORIES, POPULAR_SERVICES, STATS } from '../data/constants';
+import { HOME_CATEGORIES, POPULAR_SERVICES, STATS } from '../data/servicesData';
 import ServiceCard from '../components/ServiceCard';
 import TestimonialSection from '../components/TestimonialSection';
 import FAQSection from '../components/FAQSection';
 
-const HomeLanding = ({ filteredServices, setShowModal, setSearchQuery, searchQuery, onNavigate, onSearchInput }) => {
+const HomeLanding = () => {
+    const { searchQuery, setSearchQuery, handleNavClick } = useOutletContext();
+    const navigate = useNavigate();
+    const [showModal, setShowModal] = useState(null);
     const resultsRef = useRef(null);
+
+    const filteredServices = searchQuery
+        ? POPULAR_SERVICES.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
+        : POPULAR_SERVICES;
+
+    const onSearchInput = (val) => setSearchQuery(val);
+    const onNavigate = handleNavClick; // Alias for compatibility
 
     const handleSearch = (e) => {
         onSearchInput(e.target.value);
@@ -194,6 +205,30 @@ const HomeLanding = ({ filteredServices, setShowModal, setSearchQuery, searchQue
             {/* New Sections for Professional Polish */}
             <TestimonialSection />
             <FAQSection />
+            {/* Service Modal moved here */}
+            {showModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl">
+                        <div className="flex justify-between items-start mb-8">
+                            <div className="flex items-center space-x-5">
+                                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
+                                    <showModal.icon className="w-7 h-7 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-extrabold text-slate-900">{showModal.title}</h3>
+                                    <p className="text-blue-600 font-bold text-lg">{showModal.price}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+                        </div>
+                        <p className="text-slate-600 mb-8">Start your {showModal.title} process completely online.</p>
+                        <div className="flex space-x-4">
+                            <button onClick={() => { setShowModal(null); navigate(`/service/${encodeURIComponent(showModal.title)}`); }} className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold">Get Started</button>
+                            <button onClick={() => setShowModal(null)} className="flex-1 bg-white border-2 border-gray-100 text-slate-700 py-4 rounded-xl font-bold">Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
