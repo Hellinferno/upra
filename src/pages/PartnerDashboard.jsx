@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bell, Briefcase as BriefcaseIcon, UploadCloud } from 'lucide-react';
+import { SkeletonDashboard } from '../components/SkeletonLoader';
 import { SERVICE_PROFESSION_MAP } from '../data/constants';
 
 const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork }) => {
@@ -7,13 +8,13 @@ const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork 
     // e.g. If partner is CA, they see CA jobs.
     const myProfession = user.profession || "CA";
 
-    const availableJobs = orders.filter(o =>
+    const availableJobs = orders ? orders.filter(o =>
         o.status === 'Pending Allocation' &&
         SERVICE_PROFESSION_MAP[o.service]?.includes(myProfession)
-    );
+    ) : [];
 
-    const myActiveJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'In Progress');
-    const myCompletedJobs = orders.filter(o => o.assignedPartner === user.name && o.status === 'Completed');
+    const myActiveJobs = orders ? orders.filter(o => o.assignedPartner === user.name && o.status === 'In Progress') : [];
+    // const myCompletedJobs = orders ? orders.filter(o => o.assignedPartner === user.name && o.status === 'Completed') : [];
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-inter">
@@ -29,54 +30,58 @@ const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork 
             </div>
 
             <main className="flex-1 overflow-y-auto p-10">
-                <h1 className="text-3xl font-bold mb-8 text-slate-800">Workstation</h1>
+                {!orders ? <SkeletonDashboard /> : (
+                    <>
+                        <h1 className="text-3xl font-bold mb-8 text-slate-800">Workstation</h1>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Available Jobs Column */}
-                    <div>
-                        <h2 className="text-xl font-bold mb-4 text-slate-700 flex items-center"><Bell className="w-5 h-5 mr-2" /> New Opportunities</h2>
-                        <div className="space-y-4">
-                            {availableJobs.length === 0 && <p className="text-slate-400 italic">No new jobs matching your profile.</p>}
-                            {availableJobs.map((job, i) => (
-                                <div key={i} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-                                    <h4 className="font-bold text-lg">{job.service}</h4>
-                                    <p className="text-sm text-slate-500 mb-4">Client: {job.fullName}</p>
-                                    <button
-                                        onClick={() => onAcceptOrder(job)}
-                                        className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
-                                    >
-                                        Accept & Start
-                                    </button>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Available Jobs Column */}
+                            <div>
+                                <h2 className="text-xl font-bold mb-4 text-slate-700 flex items-center"><Bell className="w-5 h-5 mr-2" /> New Opportunities</h2>
+                                <div className="space-y-4">
+                                    {availableJobs.length === 0 && <p className="text-slate-400 italic">No new jobs matching your profile.</p>}
+                                    {availableJobs.map((job, i) => (
+                                        <div key={i} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+                                            <h4 className="font-bold text-lg">{job.service}</h4>
+                                            <p className="text-sm text-slate-500 mb-4">Client: {job.fullName}</p>
+                                            <button
+                                                onClick={() => onAcceptOrder(job)}
+                                                className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
+                                            >
+                                                Accept & Start
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Active Jobs Column */}
-                    <div>
-                        <h2 className="text-xl font-bold mb-4 text-slate-700 flex items-center"><BriefcaseIcon className="w-5 h-5 mr-2" /> My Active Jobs</h2>
-                        <div className="space-y-4">
-                            {myActiveJobs.length === 0 && <p className="text-slate-400 italic">You have no active jobs.</p>}
-                            {myActiveJobs.map((job, i) => (
-                                <div key={i} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
-                                    <h4 className="font-bold text-lg">{job.service}</h4>
-                                    <div className="my-4 bg-slate-50 p-3 rounded text-xs text-slate-600">
-                                        <p className="font-bold mb-1">Documents Uploaded by Client:</p>
-                                        <ul className="list-disc pl-4">
-                                            {job.documents?.map((d, k) => <li key={k}>{d}</li>)}
-                                        </ul>
-                                    </div>
-                                    <button
-                                        onClick={() => onSubmitWork(job)}
-                                        className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center"
-                                    >
-                                        <UploadCloud className="w-4 h-4 mr-2" /> Submit Completed Work
-                                    </button>
+                            {/* Active Jobs Column */}
+                            <div>
+                                <h2 className="text-xl font-bold mb-4 text-slate-700 flex items-center"><BriefcaseIcon className="w-5 h-5 mr-2" /> My Active Jobs</h2>
+                                <div className="space-y-4">
+                                    {myActiveJobs.length === 0 && <p className="text-slate-400 italic">You have no active jobs.</p>}
+                                    {myActiveJobs.map((job, i) => (
+                                        <div key={i} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                                            <h4 className="font-bold text-lg">{job.service}</h4>
+                                            <div className="my-4 bg-slate-50 p-3 rounded text-xs text-slate-600">
+                                                <p className="font-bold mb-1">Documents Uploaded by Client:</p>
+                                                <ul className="list-disc pl-4">
+                                                    {job.documents?.map((d, k) => <li key={k}>{d}</li>)}
+                                                </ul>
+                                            </div>
+                                            <button
+                                                onClick={() => onSubmitWork(job)}
+                                                className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center"
+                                            >
+                                                <UploadCloud className="w-4 h-4 mr-2" /> Submit Completed Work
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </>
+                )}
             </main>
         </div>
     );

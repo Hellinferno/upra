@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
+import { SkeletonDashboard } from '../components/SkeletonLoader';
 
 const Dashboard = ({ user, onLogout, orders }) => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -26,7 +27,7 @@ const Dashboard = ({ user, onLogout, orders }) => {
                         <h1 className="text-3xl font-bold mb-8">Hello, {user.name}</h1>
 
                         {/* Dynamic Orders List */}
-                        {activeTab === 'orders' || activeTab === 'overview' ? (
+                        {!orders ? <SkeletonDashboard /> : (activeTab === 'orders' || activeTab === 'overview') ? (
                             <div className="space-y-6">
                                 <h2 className="text-xl font-bold">Your Service Requests</h2>
                                 {myOrders.length === 0 ? (

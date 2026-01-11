@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useOrders } from './hooks/useOrders';
 import { db } from './lib/firebase';
@@ -58,7 +58,7 @@ const AppContent = () => {
       navigate('/dashboard');
     } catch (err) {
       console.error("Error booking service:", err);
-      alert("Failed to book service. See console.");
+      toast.error("Failed to book service. Please try again.");
     }
   };
 

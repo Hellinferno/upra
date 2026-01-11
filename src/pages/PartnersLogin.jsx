@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Briefcase as BriefcaseIcon } from 'lucide-react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from '../lib/firebase';
+import { toast } from 'react-hot-toast';
 
 const PartnersLogin = ({ setUser }) => {
     const navigate = useNavigate();
@@ -93,7 +94,7 @@ const PartnersLogin = ({ setUser }) => {
         if (!resetEmail) return setError("Please enter your email address.");
 
         if (!auth) {
-            alert("Demo Mode: Password reset email sent (simulation).");
+            toast.success("Demo Mode: Password reset email sent (simulation).");
             setIsResetting(false);
             setResetEmail('');
             return;
@@ -101,12 +102,12 @@ const PartnersLogin = ({ setUser }) => {
 
         try {
             await sendPasswordResetEmail(auth, resetEmail);
-            alert("Password reset email sent! Check your inbox.");
+            toast.success("Password reset email sent! Check your inbox.");
             setIsResetting(false);
             setResetEmail('');
         } catch (err) {
             if (err.code === 'auth/api-key-not-valid') {
-                alert("Demo Mode: Password reset email sent (simulation).");
+                toast.success("Demo Mode: Password reset email sent (simulation).");
                 setIsResetting(false);
             } else {
                 setError(err.message.replace("Firebase: ", ""));

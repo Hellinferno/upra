@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { SERVICE_DETAILS } from '../data/servicesData';
 
 const ServicePage = ({ onBook }) => {
@@ -24,14 +27,23 @@ const ServicePage = ({ onBook }) => {
     };
 
     const [isBooking, setIsBooking] = useState(false);
-    const [formData, setFormData] = useState({ fullName: '', email: '', phone: '' });
 
-    const handleBookSubmit = (e) => {
-        e.preventDefault();
+    // Zod Schema
+    const bookingSchema = z.object({
+        fullName: z.string().min(2, "Name must be at least 2 characters"),
+        email: z.string().email("Invalid email address"),
+        phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits")
+    });
+
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+        resolver: zodResolver(bookingSchema)
+    });
+
+    const onSubmit = async (data) => {
         // Pass the order details up to App
-        onBook({
+        await onBook({
             service: serviceName,
-            ...formData,
+            ...data,
             date: new Date().toISOString(),
             status: 'Pending Allocation',
             documents: content.documents
@@ -91,17 +103,37 @@ const ServicePage = ({ onBook }) => {
                                     <div className="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-800">
                                         Simulating Payment & Document Upload...
                                     </div>
-                                    <form onSubmit={handleBookSubmit} className="space-y-4">
+                                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">YOUR NAME</label>
-                                            <input required type="text" className="w-full p-2 border rounded" value={formData.fullName} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
+                                            <input
+                                                {...register("fullName")}
+                                                type="text"
+                                                className={`w-full p-2 border rounded ${errors.fullName ? 'border-red-500' : 'border-gray-200'}`}
+                                            />
+                                            {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">EMAIL</label>
-                                            <input required type="email" className="w-full p-2 border rounded" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                            <input
+                                                {...register("email")}
+                                                type="email"
+                                                className={`w-full p-2 border rounded ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
+                                            />
+                                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                                         </div>
-                                        <button className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">
-                                            Pay & Submit Order
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 mb-1">PHONE</label>
+                                            <input
+                                                {...register("phone")}
+                                                type="tel"
+                                                className={`w-full p-2 border rounded ${errors.phone ? 'border-red-500' : 'border-gray-200'}`}
+                                                placeholder="9876543210"
+                                            />
+                                            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+                                        </div>
+                                        <button disabled={isSubmitting} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed">
+                                            {isSubmitting ? 'Processing...' : 'Pay & Submit Order'}
                                         </button>
                                         <button type="button" onClick={() => setIsBooking(false)} className="w-full text-gray-500 text-sm py-2">Cancel</button>
                                     </form>
