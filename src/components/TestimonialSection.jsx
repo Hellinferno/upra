@@ -1,6 +1,6 @@
 import React from 'react';
 import { Quote } from 'lucide-react';
-import { TESTIMONIALS } from '../data/constants';
+import { TESTIMONIALS } from '../data/servicesData';
 
 const TestimonialSection = () => (
     <section className="py-24 bg-white relative overflow-hidden">
