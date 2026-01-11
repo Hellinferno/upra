@@ -8,8 +8,9 @@ import TestimonialSection from '../components/TestimonialSection';
 import FAQSection from '../components/FAQSection';
 
 const HomeLanding = () => {
-    const { searchQuery, setSearchQuery, handleNavClick } = useOutletContext();
+    // FIX: Removed useOutletContext which causes crash when used in MainLayout
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
     const [showModal, setShowModal] = useState(null);
     const resultsRef = useRef(null);
 
@@ -21,6 +22,28 @@ const HomeLanding = () => {
         : allServices;
 
     const onSearchInput = (val) => setSearchQuery(val);
+
+    // Check if path is an ID from HOME_CATEGORIES or a direct path
+    const handleNavClick = (path) => {
+        if (['Startup', 'MCA', 'Compliance', 'Global', 'Registrations', 'Trademark', 'Goods & Services Tax', 'Income Tax'].includes(path)) {
+            // Map category ID to route path if needed, or if ID matches path name
+            // Our routes are lowercase /startup, /mca, etc.
+            const routeMap = {
+                'Startup': '/startup',
+                'MCA': '/mca',
+                'Compliance': '/compliance',
+                'Global': '/global',
+                'Registrations': '/registrations',
+                'Trademark': '/trademark',
+                'Goods & Services Tax': '/gst',
+                'Income Tax': '/incometax'
+            };
+            navigate(routeMap[path] || '/' + path.toLowerCase().replace(/ /g, ''));
+        } else {
+            navigate(path);
+        }
+    };
+
     const onNavigate = handleNavClick; // Alias for compatibility
 
     const handleSearch = (e) => {
