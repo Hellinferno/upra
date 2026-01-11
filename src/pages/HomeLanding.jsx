@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Search, Rocket, FileText, Award, Calculator, Percent, Building, Shield, Globe, CheckCircle, Quote, Plus, Minus, ArrowLeft, ArrowRight, X } from 'lucide-react';
-import { HOME_CATEGORIES, POPULAR_SERVICES, STATS } from '../data/servicesData';
+import { HOME_CATEGORIES, STATS } from '../data/servicesData';
+import allServices from '../data/services.json';
 import ServiceCard from '../components/ServiceCard';
 import TestimonialSection from '../components/TestimonialSection';
 import FAQSection from '../components/FAQSection';
@@ -13,8 +14,11 @@ const HomeLanding = () => {
     const resultsRef = useRef(null);
 
     const filteredServices = searchQuery
-        ? POPULAR_SERVICES.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
-        : POPULAR_SERVICES;
+        ? allServices.filter(service =>
+            service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            service.tags.some(tag => tag.includes(searchQuery.toLowerCase()))
+        )
+        : allServices;
 
     const onSearchInput = (val) => setSearchQuery(val);
     const onNavigate = handleNavClick; // Alias for compatibility

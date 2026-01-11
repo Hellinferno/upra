@@ -1,4 +1,7 @@
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { X, Briefcase as BriefcaseIcon } from 'lucide-react';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from '../lib/firebase';
 
 const PartnersLogin = ({ setUser }) => {

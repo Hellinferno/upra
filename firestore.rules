@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    match /orders/{orderId} {
+      // Clients can create orders and read their own
+      allow create: if request.auth != null;
+      allow read: if request.auth.uid == resource.data.userId;
+
+      // Partners (verified via data role) can read unassigned or assigned orders
+      // In production, use Custom Claims: request.auth.token.role == 'partner'
+      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'partner';
+
+      // CRITICAL: Prevent stealing orders
+      allow update: if 
+        // Client cancelling order (only status change allowed)
+        (request.auth.uid == resource.data.userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+        
+        // Partner accepting order (must be unassigned currently, and assigning to self)
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'partner' && 
+         resource.data.assignedPartnerId == null &&
+         request.resource.data.assignedPartnerId == request.auth.uid);
+    }
+  }
+}

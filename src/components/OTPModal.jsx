@@ -1,27 +1,105 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Smartphone } from 'lucide-react';
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from '../lib/firebase';
+import { toast } from 'react-hot-toast';
 
 const OTPModal = ({ onClose }) => {
     const [step, setStep] = useState(1);
     const [mobile, setMobile] = useState('');
     const [otp, setOtp] = useState('');
+    const [confirmationResult, setConfirmationResult] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    const handleSendOTP = (e) => {
+    useEffect(() => {
+        if (!auth) return;
+
+        // Initialize Recaptcha only once
+        if (!window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': (response) => {
+                        // reCAPTCHA solved
+                    }
+                });
+            } catch (err) {
+                console.warn("Recaptcha Init Warning:", err);
+            }
+        }
+    }, []);
+
+    const handleSendOTP = async (e) => {
         e.preventDefault();
-        if (mobile.length === 10) {
+
+        if (mobile.length !== 10) {
+            toast.error("Please enter a valid 10-digit mobile number");
+            return;
+        }
+
+        setLoading(true);
+
+        // DEMO MODE CHECK
+        const isDemo = !auth || !auth.app.options.apiKey || auth.app.options.apiKey === "YOUR_API_KEY_HERE";
+
+        if (isDemo) {
+            setTimeout(() => {
+                setStep(2);
+                setLoading(false);
+                toast.success("Demo Mode: OTP is 1234");
+            }, 1000);
+            return;
+        }
+
+        try {
+            const appVerifier = window.recaptchaVerifier;
+            const formattedMobile = `+91${mobile}`;
+            const result = await signInWithPhoneNumber(auth, formattedMobile, appVerifier);
+            setConfirmationResult(result);
             setStep(2);
-        } else {
-            alert("Please enter a valid 10-digit mobile number");
+            toast.success("OTP sent successfully!");
+        } catch (error) {
+            console.error("OTP Error:", error);
+            toast.error(error.message || "Failed to send OTP");
+
+            // Fallback for demo visualization if API fails
+            if (error.code === 'auth/api-key-not-valid') {
+                setStep(2);
+                toast("Simulating OTP sent (Invalid API Key)", { icon: '⚠️' });
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleVerifyOTP = (e) => {
+    const handleVerifyOTP = async (e) => {
         e.preventDefault();
-        if (otp === '1234') {
-            alert("Verified Successfully! (Mock)");
+        setLoading(true);
+
+        // DEMO MODE VERIFICATION
+        if (!confirmationResult) {
+            if (otp === '1234') {
+                setTimeout(() => {
+                    toast.success("Verified Successfully! (Demo)");
+                    onClose();
+                    setLoading(false);
+                }, 800);
+            } else {
+                toast.error("Invalid OTP (Try 1234)");
+                setLoading(false);
+            }
+            return;
+        }
+
+        try {
+            await confirmationResult.confirm(otp);
+            toast.success("Login Successful!");
             onClose();
-        } else {
-            alert("Invalid OTP (Try 1234)");
+        } catch (error) {
+            console.error("Verify Error:", error);
+            toast.error("Invalid OTP");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -43,6 +121,8 @@ const OTPModal = ({ onClose }) => {
                     </p>
                 </div>
 
+                <div id="recaptcha-container"></div>
+
                 {step === 1 ? (
                     <form onSubmit={handleSendOTP} className="space-y-4">
                         <div>
@@ -56,11 +136,12 @@ const OTPModal = ({ onClose }) => {
                                     value={mobile}
                                     onChange={(e) => setMobile(e.target.value)}
                                     maxLength={10}
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
-                        <button className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors">
-                            Get OTP
+                        <button disabled={loading} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors disabled:opacity-50">
+                            {loading ? "Sending..." : "Get OTP"}
                         </button>
                     </form>
                 ) : (
@@ -70,16 +151,17 @@ const OTPModal = ({ onClose }) => {
                                 type="text"
                                 className="w-32 text-center text-2xl tracking-widest border-b-2 border-slate-300 focus:border-blue-600 outline-none py-2"
                                 placeholder="• • • •"
-                                maxLength={4}
+                                maxLength={6}
                                 value={otp}
                                 onChange={(e) => setOtp(e.target.value)}
                                 autoFocus
+                                disabled={loading}
                             />
                         </div>
-                        <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">
-                            Verify & Login
+                        <button disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50">
+                            {loading ? "Verifying..." : "Verify & Login"}
                         </button>
-                        <button type="button" onClick={() => setStep(1)} className="w-full text-xs text-blue-600 font-bold hover:underline">
+                        <button type="button" onClick={() => setStep(1)} className="w-full text-xs text-blue-600 font-bold hover:underline" disabled={loading}>
                             Change Number?
                         </button>
                     </form>
