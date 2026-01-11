@@ -25,7 +25,7 @@ import {
 } from './pages/CategoryLandings';
 
 // --- Import Reusable Components ---
-import Layout from './components/Layout';
+import MainLayout from './layouts/MainLayout';
 
 // --- Main App Component ---
 const AppContent = () => {
@@ -102,28 +102,32 @@ const AppContent = () => {
     <>
       <Toaster position="top-center" />
       <Routes>
-        <Route path="/" element={<Layout user={user} />}>
-          <Route index element={<HomeLanding />} />
-          <Route path="startup" element={<StartupLanding />} />
-          <Route path="mca" element={<MCALanding />} />
-          <Route path="compliance" element={<ComplianceLanding />} />
-          <Route path="global" element={<GlobalLanding />} />
-          <Route path="registrations" element={<RegistrationsLanding />} />
-          <Route path="trademark" element={<TrademarkLanding />} />
-          <Route path="gst" element={<GSTLanding />} />
-          <Route path="incometax" element={<IncomeTaxLanding />} />
-          <Route path="service/:serviceName" element={<ServicePage onBook={handleBookService} />} />
-        </Route>
+        {/* PUBLIC ROUTES (Wrapped in MainLayout) */}
+        <Route path="/" element={<MainLayout user={user}><HomeLanding /></MainLayout>} />
 
+        <Route path="/startup" element={<MainLayout user={user}><StartupLanding /></MainLayout>} />
+        <Route path="/mca" element={<MainLayout user={user}><MCALanding /></MainLayout>} />
+        <Route path="/compliance" element={<MainLayout user={user}><ComplianceLanding /></MainLayout>} />
+        <Route path="/global" element={<MainLayout user={user}><GlobalLanding /></MainLayout>} />
+        <Route path="/registrations" element={<MainLayout user={user}><RegistrationsLanding /></MainLayout>} />
+        <Route path="/trademark" element={<MainLayout user={user}><TrademarkLanding /></MainLayout>} />
+        <Route path="/gst" element={<MainLayout user={user}><GSTLanding /></MainLayout>} />
+        <Route path="/incometax" element={<MainLayout user={user}><IncomeTaxLanding /></MainLayout>} />
+        <Route path="/service/:serviceName" element={<MainLayout user={user}><ServicePage onBook={handleBookService} /></MainLayout>} />
+
+        {/* AUTH/PARTNER ROUTES */}
         <Route path="/login" element={<Login isDemoMode={false} />} />
 
         <Route path="/partners" element={<PartnersLogin />} />
 
+        {/* PROTECTED ROUTES */}
         <Route
           path="/dashboard"
           element={
             user ? (
-              <Dashboard user={user} onLogout={logout} orders={orders} />
+              <MainLayout user={user}>
+                <Dashboard user={user} onLogout={logout} orders={orders} />
+              </MainLayout>
             ) : (
               <Navigate to="/login" replace />
             )
