@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,7 +10,9 @@ const ServicePage = ({ onBook }) => {
     const { serviceName: rawServiceName } = useParams();
     const serviceName = decodeURIComponent(rawServiceName);
     const navigate = useNavigate();
+
     const details = SERVICE_DETAILS[serviceName];
+
     const content = details || {
         title: serviceName,
         description: `Get your ${serviceName} done completely online with expert assistance. We simplify the legal process so you can focus on your business.`,
