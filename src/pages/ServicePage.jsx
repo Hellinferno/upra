@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Info, ThumbsUp, ThumbsDown, Star, X, Clock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { SERVICE_DETAILS } from '../data/servicesData';
+import { useOrderStore } from '../store/orderStore';
 
 const ServicePage = ({ onBook }) => {
     const { serviceName: rawServiceName } = useParams();
     const serviceName = decodeURIComponent(rawServiceName);
     const navigate = useNavigate();
+    const { addOrder, user, setUser } = useOrderStore();
 
     const details = SERVICE_DETAILS[serviceName];
 
@@ -38,18 +40,39 @@ const ServicePage = ({ onBook }) => {
     });
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-        resolver: zodResolver(bookingSchema)
+        resolver: zodResolver(bookingSchema),
+        defaultValues: {
+            fullName: user?.name || '',
+            email: user?.email || '',
+            phone: ''
+        }
     });
 
     const onSubmit = async (data) => {
-        // Pass the order details up to App
-        await onBook({
+        const orderDetails = {
+            id: Date.now(),
             service: serviceName,
             ...data,
             date: new Date().toISOString(),
             status: 'Pending Allocation',
-            documents: content.documents
-        });
+            documents: content.documents,
+            userId: user?.uid || null,
+            assignedPartner: null
+        };
+
+        addOrder(orderDetails);
+
+        // If user wasn't logged in, log them in as a guest/new user (Demo logic)
+        if (!user) {
+            setUser({ name: data.fullName, email: data.email, uid: "guest_" + Date.now() });
+        }
+
+        // Use the onBook prop if it exists (for backward compatibility) or navigate
+        if (onBook) {
+            onBook(orderDetails);
+        } else {
+            navigate('/dashboard');
+        }
     };
 
     return (
@@ -77,6 +100,23 @@ const ServicePage = ({ onBook }) => {
                         <p className="text-lg text-slate-600 mb-8 leading-relaxed">
                             {content.description}
                         </p>
+
+                        {(content.price || content.timeline) && (
+                            <div className="flex flex-wrap items-center gap-6 mb-8 text-sm font-medium">
+                                {content.price && (
+                                    <div className="flex items-center text-slate-900 bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+                                        <span className="text-slate-500 mr-2">Starting at:</span>
+                                        <span className="text-2xl font-bold text-green-700">{content.price}</span>
+                                    </div>
+                                )}
+                                {content.timeline && (
+                                    <div className="flex items-center text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+                                        <Clock className="w-5 h-5 mr-2 text-slate-500" />
+                                        <span>{content.timeline}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="flex flex-col sm:flex-row gap-4 mb-8">
                             <button

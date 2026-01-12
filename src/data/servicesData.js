@@ -43,6 +43,8 @@ export const SERVICE_DETAILS = {
         title: "Private Limited Company Registration",
         description: "The most popular legal structure for businesses and startups in India, governed by the Companies Act, 2013.",
         whatIs: "A Private Limited Company is a company held by small group of people. It is registered with the Ministry of Corporate Affairs (MCA). It is a separate legal entity with perpetual succession and limited liability.",
+        price: "₹6,999*",
+        timeline: "10-15 Days",
         requirements: [
             "Minimum 2 Directors and 2 Shareholders (can be same)",
             "Maximum 200 Shareholders",
@@ -70,9 +72,10 @@ export const SERVICE_DETAILS = {
         documents: [
             "PAN Card of all Directors/Shareholders",
             "Aadhar/Voter ID/Passport",
-            "Bank Statement/Utility Bill (latest)",
+            "Passport Size Photos",
+            "Latest Bank Statement/Utility Bill (Residence Proof)",
             "Rent Agreement & NOC for Office",
-            "Passport photos"
+            "Utility Bill for Office (Electricity/Gas)"
         ]
     },
     "One Person Company": {
@@ -183,6 +186,8 @@ export const SERVICE_DETAILS = {
         title: "GST Registration",
         description: "Mandatory tax registration for businesses supplying goods or services in India.",
         whatIs: "Goods and Services Tax (GST) is an indirect tax used in India on the supply of goods and services. Registration is mandatory if turnover exceeds ₹40 Lakhs (Goods) or ₹20 Lakhs (Services), or for inter-state supply.",
+        price: "₹1,499*",
+        timeline: "3-7 Days",
         requirements: [
             "Business Name",
             "PAN of Business/Owner",
@@ -208,16 +213,18 @@ export const SERVICE_DETAILS = {
         ],
         documents: [
             "PAN Card",
-            "Aadhar Card",
-            "Proof of Place of Business (Electricity Bill/Rent Agreement)",
-            "Bank Account Proof",
-            "Photo of Owner/Signatory"
+            "Aadhar Card of Owner",
+            "Passport Size Photo",
+            "Business Address Proof (Electricity Bill/Rent Agreement)",
+            "Bank Proof (Cancelled Cheque/Passbook)"
         ]
     },
     "Trademark Registration": {
         title: "Trademark Registration",
         description: "Legal protection for your brand name, logo, or slogan under the Trade Marks Act, 1999.",
         whatIs: "A trademark is a unique identity that distinguishes your product/service from others. Registration gives exclusive rights to use the ® symbol and take legal action against infringement.",
+        price: "₹5,999* + Govt Fees",
+        timeline: "1-3 Days (Filing)",
         requirements: [
             "Unique Brand Name/Logo",
             "Appropriate Class Selection (1-45)",
@@ -237,14 +244,15 @@ export const SERVICE_DETAILS = {
             "Valid for 10 years."
         ],
         cons: [
-            "Long process (6-18 months).",
+            "Long process (6-18 months for final grant).",
             "Risk of objection/opposition."
         ],
         documents: [
             "Logo/Brand Name copy",
             "PAN & ID Proof",
-            "Udyam (for 50% govt fee discount)",
-            "Signed Power of Attorney (Form 48)"
+            "Udyam Registration (for 50% govt fee discount)",
+            "Signed Power of Attorney (Form 48)",
+            "User Affidavit (if logo is already in use)"
         ]
     },
     "FSSAI Registration": {

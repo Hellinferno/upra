@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { SkeletonDashboard } from '../components/SkeletonLoader';
+import { useOrderStore } from '../store/orderStore';
 
-const Dashboard = ({ user, onLogout, orders }) => {
+const Dashboard = () => {
+    const { user, orders, logout } = useOrderStore();
     const [activeTab, setActiveTab] = useState('overview');
 
-    // Filter orders for this specific user (In mock, user.uid matches)
-    // For demo, we show all if no filtering logic is rigorous, but let's try to match
-    const myOrders = orders; // In real app: orders.filter(o => o.userId === user.uid)
+    // Safety check
+    if (!user) return null;
+
+    // Filter orders to show only client's own orders
+    // In this simple demo, we might just show all if user is 'Demo User' or match by email/name
+    // For now, let's filter by the user object reference or name if available
+    const myOrders = orders.filter(o => o.email === user.email || o.userId === user.uid);
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-inter">
@@ -18,7 +24,7 @@ const Dashboard = ({ user, onLogout, orders }) => {
                     <button onClick={() => setActiveTab('overview')} className="w-full text-left px-4 py-2 text-slate-300 hover:text-white">Overview</button>
                     <button onClick={() => setActiveTab('orders')} className="w-full text-left px-4 py-2 text-slate-300 hover:text-white">My Orders</button>
                 </nav>
-                <div className="p-6"><button onClick={onLogout} className="text-red-400">Logout</button></div>
+                <div className="p-6"><button onClick={logout} className="text-red-400">Logout</button></div>
             </div>
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -38,7 +44,7 @@ const Dashboard = ({ user, onLogout, orders }) => {
                                             <div>
                                                 <h4 className="font-bold text-lg text-slate-900">{order.service}</h4>
                                                 <p className="text-sm text-slate-500">Booked on: {new Date(order.date).toLocaleDateString()}</p>
-                                                <p className="text-xs text-slate-400 mt-1">Order ID: #{1000 + idx}</p>
+                                                <p className="text-xs text-slate-400 mt-1">Order ID: #{order.id}</p>
                                             </div>
                                             <div className="text-right">
                                                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 

@@ -2,8 +2,13 @@ import React from 'react';
 import { Bell, Briefcase as BriefcaseIcon, UploadCloud } from 'lucide-react';
 import { SkeletonDashboard } from '../components/SkeletonLoader';
 import { SERVICE_PROFESSION_MAP } from '../data/constants';
+import { useOrderStore } from '../store/orderStore';
 
-const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork }) => {
+const PartnerDashboard = () => {
+    const { user, orders, updateOrderStatus, logout } = useOrderStore();
+
+    // Safety check if user is not loaded
+    if (!user) return null;
     // Filter available jobs based on partner profession
     // e.g. If partner is CA, they see CA jobs.
     const myProfession = user.profession || "CA";
@@ -26,13 +31,25 @@ const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork 
                     </div>
                     <p className="text-xs text-purple-300 mt-1">{user.name} ({myProfession})</p>
                 </div>
-                <div className="p-6"><button onClick={onLogout} className="text-white bg-purple-800 px-4 py-2 rounded">Logout</button></div>
+                <div className="p-6"><button onClick={logout} className="text-white bg-purple-800 px-4 py-2 rounded">Logout</button></div>
             </div>
 
             <main className="flex-1 overflow-y-auto p-10">
                 {!orders ? <SkeletonDashboard /> : (
                     <>
-                        <h1 className="text-3xl font-bold mb-8 text-slate-800">Workstation</h1>
+                        <h1 className="text-3xl font-bold mb-8 text-slate-800">
+                            Workstation {user.status === 'Pending Verification' && <span className="text-sm bg-amber-100 text-amber-800 px-3 py-1 rounded-full ml-3">⚠️ Verification Pending</span>}
+                        </h1>
+
+                        {user.status === 'Pending Verification' && (
+                            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-8 rounded shadow-sm">
+                                <h3 className="font-bold text-amber-800">Account Under Review</h3>
+                                <p className="text-amber-700 text-sm mt-1">
+                                    Thanks for joining, {user.name}! Your profile (Membership: {user.membershipNumber}) is currently being verified by our admin team.
+                                    You can view available jobs but cannot accept them until verified.
+                                </p>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* Available Jobs Column */}
@@ -45,10 +62,14 @@ const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork 
                                             <h4 className="font-bold text-lg">{job.service}</h4>
                                             <p className="text-sm text-slate-500 mb-4">Client: {job.fullName}</p>
                                             <button
-                                                onClick={() => onAcceptOrder(job)}
-                                                className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
+                                                disabled={user.status === 'Pending Verification'}
+                                                onClick={() => updateOrderStatus(job.id, 'In Progress', user.name)}
+                                                className={`w-full py-2 rounded-lg font-bold transition-all ${user.status === 'Pending Verification'
+                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                                    }`}
                                             >
-                                                Accept & Start
+                                                {user.status === 'Pending Verification' ? 'Verification Required' : 'Accept & Start'}
                                             </button>
                                         </div>
                                     ))}
@@ -70,7 +91,10 @@ const PartnerDashboard = ({ user, onLogout, orders, onAcceptOrder, onSubmitWork 
                                                 </ul>
                                             </div>
                                             <button
-                                                onClick={() => onSubmitWork(job)}
+                                                onClick={() => {
+                                                    updateOrderStatus(job.id, 'Completed');
+                                                    alert("Work submitted successfully!");
+                                                }}
                                                 className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center"
                                             >
                                                 <UploadCloud className="w-4 h-4 mr-2" /> Submit Completed Work

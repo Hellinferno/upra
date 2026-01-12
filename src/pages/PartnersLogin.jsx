@@ -4,8 +4,10 @@ import { X, Briefcase as BriefcaseIcon } from 'lucide-react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from '../lib/firebase';
 import { toast } from 'react-hot-toast';
+import { useOrderStore } from '../store/orderStore';
 
-const PartnersLogin = ({ setUser }) => {
+const PartnersLogin = ({ setView }) => {
+    const { setUser } = useOrderStore();
     const navigate = useNavigate();
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');
@@ -17,7 +19,8 @@ const PartnersLogin = ({ setUser }) => {
     const [mobile, setMobile] = useState('');
     const [profession, setProfession] = useState('');
     const [city, setCity] = useState('');
-    const [state, setState] = useState('');
+    const [membershipNumber, setMembershipNumber] = useState('');
+    const [experience, setExperience] = useState('');
 
     const [error, setError] = useState('');
     const [isResetting, setIsResetting] = useState(false);
@@ -35,11 +38,18 @@ const PartnersLogin = ({ setUser }) => {
                 email: email,
                 isPartner: true,
                 profession: isSignUp ? profession : "CA", // Default to CA for demo
+                status: isSignUp ? 'Pending Verification' : 'Verified',
+                membershipNumber,
+                experience,
                 uid: "partner_" + Date.now()
             };
             setUser(mockUser);
-            setUser(mockUser);
-            navigate('/partner-dashboard'); // New specific dashboard
+            if (isSignUp) {
+                toast.success("Registration successful! Pending verification.");
+            } else {
+                toast.success("Welcome back!");
+            }
+            setView('partnerDashboard'); // Update view using parent's handler
             return;
         }
 
@@ -55,6 +65,9 @@ const PartnersLogin = ({ setUser }) => {
                     email: email,
                     isPartner: true,
                     profession: profession,
+                    status: 'Pending Verification',
+                    membershipNumber,
+                    experience,
                     uid: userCredential.user.uid
                 });
             } else {
@@ -68,7 +81,7 @@ const PartnersLogin = ({ setUser }) => {
                     uid: userCredential.user.uid
                 });
             }
-            navigate('/partner-dashboard');
+            setView('partnerDashboard');
         } catch (err) {
             // Handle invalid API key by falling back to demo mode
             if (err.code === 'auth/api-key-not-valid' || err.message.includes('api-key-not-valid')) {
@@ -78,10 +91,13 @@ const PartnersLogin = ({ setUser }) => {
                     email: email,
                     isPartner: true,
                     profession: isSignUp ? profession : "CA",
+                    status: isSignUp ? 'Pending Verification' : 'Verified',
+                    membershipNumber,
+                    experience,
                     uid: "partner_" + Date.now()
                 };
                 setUser(mockUser);
-                navigate('/partner-dashboard');
+                setView('partnerDashboard');
             } else {
                 setError(err.message.replace("Firebase: ", ""));
             }
@@ -118,7 +134,7 @@ const PartnersLogin = ({ setUser }) => {
     return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-inter">
             <div className={`bg-white w-full ${isSignUp ? 'max-w-2xl' : 'max-w-md'} p-10 rounded-3xl shadow-2xl border border-gray-100 relative transition-all duration-300`}>
-                <button onClick={() => navigate('/')} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                <button onClick={() => setView('home')} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
                     <X className="w-5 h-5" />
                 </button>
 
@@ -236,6 +252,31 @@ const PartnersLogin = ({ setUser }) => {
                                         <option value="Tax Consultant">Tax Consultant</option>
                                         <option value="Other">Other</option>
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Membership Number</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                                        placeholder="ICAI/ICSI/Bar Council ID"
+                                        value={membershipNumber}
+                                        onChange={(e) => setMembershipNumber(e.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Years of Experience</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                                        placeholder="e.g. 5"
+                                        value={experience}
+                                        onChange={(e) => setExperience(e.target.value)}
+                                    />
                                 </div>
 
                                 <div>

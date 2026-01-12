@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Toaster, toast } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { useOrders } from './hooks/useOrders';
-import { db } from './lib/firebase';
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { Toaster } from 'react-hot-toast';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { useOrderStore } from './store/orderStore';
 import Loading from './components/Loading';
 
-// --- Import Page Components (Static for Stability) ---
+// --- Import Page Components ---
 import HomeLanding from './pages/HomeLanding';
 import ServicePage from './pages/ServicePage';
 import Dashboard from './pages/Dashboard';
@@ -29,63 +28,47 @@ import {
 import MainLayout from './layouts/MainLayout';
 
 // --- Main App Component ---
-const AppContent = () => {
-  const { user, loading, logout } = useAuth();
+const App = () => {
+  const { user, setUser, setLoading, loading } = useOrderStore();
   const navigate = useNavigate();
 
-  // Use custom hook for orders
-  // Pass user details only if logged in
-  const { orders, loading: ordersLoading } = useOrders(user?.uid, user?.role);
+  // Auth Listener
+  useEffect(() => {
+    // Safety timeout
+    const timeoutFn = setTimeout(() => {
+      if (loading) setLoading(false);
+    }, 4000);
 
-  // Handlers
-  const handleBookService = async (orderDetails) => {
-    if (!user) {
-      // Store intent or force login? For now, navigate to login or show modal
-      // Logic: If no user, we can't book to firestore easily without an ID.
-      // Let's redirect to login for now.
-      navigate('/login');
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, 'orders'), {
-        ...orderDetails,
-        userId: user.uid,
-        userEmail: user.email,
-        status: 'Pending',
-        assignedPartnerId: null,
-        createdAt: new Date()
+    let unsubscribe;
+    if (auth) {
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (currentUser) {
+          // In a real app, you'd fetch additional profile data from Firestore here
+          setUser({
+            name: currentUser.displayName || "User",
+            email: currentUser.email,
+            uid: currentUser.uid,
+            // Persist properties if they exist in store (like role from previous mock login)
+            // or default to client
+            role: 'client'
+          });
+        } else {
+          // Don't clear user immediately if we are in a "mock" session from the store 
+          // unless we explicitly want to support Firebase logout.
+          // For now, let's trust the auth state.
+          setUser(null);
+        }
+        setLoading(false);
       });
-      navigate('/dashboard');
-    } catch (err) {
-      console.error("Error booking service:", err);
-      toast.error("Failed to book service. Please try again.");
+    } else {
+      setLoading(false);
     }
-  };
 
-  const handleAcceptOrder = async (order) => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, 'orders', order.id), {
-        status: 'In Progress',
-        assignedPartnerId: user.uid,
-        assignedPartnerName: user.name
-      });
-    } catch (err) {
-      console.error("Error accepting order:", err);
-    }
-  };
-
-  const handleSubmitWork = async (order) => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, 'orders', order.id), {
-        status: 'Completed'
-      });
-    } catch (err) {
-      console.error("Error submitting work:", err);
-    }
-  };
+    return () => {
+      if (unsubscribe) unsubscribe();
+      clearTimeout(timeoutFn);
+    };
+  }, [setUser, setLoading]);
 
   // Loading state
   if (loading) {
@@ -107,12 +90,14 @@ const AppContent = () => {
         <Route path="/trademark" element={<MainLayout user={user}><TrademarkLanding /></MainLayout>} />
         <Route path="/gst" element={<MainLayout user={user}><GSTLanding /></MainLayout>} />
         <Route path="/incometax" element={<MainLayout user={user}><IncomeTaxLanding /></MainLayout>} />
-        <Route path="/service/:serviceName" element={<MainLayout user={user}><ServicePage onBook={handleBookService} /></MainLayout>} />
+
+        {/* Service Page now handles its own booking logic via store */}
+        <Route path="/service/:serviceName" element={<MainLayout user={user}><ServicePage /></MainLayout>} />
 
         {/* AUTH/PARTNER ROUTES */}
         <Route path="/login" element={<Login isDemoMode={false} />} />
 
-        <Route path="/partners" element={<PartnersLogin />} />
+        <Route path="/partners" element={<PartnersLogin setView={(view) => { if (view === 'partnerDashboard') navigate('/partner-dashboard'); else if (view === 'home') navigate('/'); }} />} />
 
         {/* PROTECTED ROUTES */}
         <Route
@@ -120,7 +105,7 @@ const AppContent = () => {
           element={
             user ? (
               <MainLayout user={user}>
-                <Dashboard user={user} onLogout={logout} orders={orders} />
+                <Dashboard />
               </MainLayout>
             ) : (
               <Navigate to="/login" replace />
@@ -131,8 +116,8 @@ const AppContent = () => {
         <Route
           path="/partner-dashboard"
           element={
-            user?.role === 'partner' || user?.isPartner ? (
-              <PartnerDashboard user={user} onLogout={logout} orders={orders} onAcceptOrder={handleAcceptOrder} onSubmitWork={handleSubmitWork} />
+            user?.isPartner ? (
+              <PartnerDashboard />
             ) : (
               <Navigate to="/partners" replace />
             )
@@ -144,11 +129,5 @@ const AppContent = () => {
     </>
   );
 };
-
-const App = () => (
-  <AuthProvider>
-    <AppContent />
-  </AuthProvider>
-);
 
 export default App;
