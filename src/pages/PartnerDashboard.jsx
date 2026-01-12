@@ -37,8 +37,21 @@ const PartnerDashboard = () => {
             <main className="flex-1 overflow-y-auto p-10">
                 {!orders ? <SkeletonDashboard /> : (
                     <>
-                        <h1 className="text-3xl font-bold mb-8 text-slate-800">
-                            Workstation {user.status === 'Pending Verification' && <span className="text-sm bg-amber-100 text-amber-800 px-3 py-1 rounded-full ml-3">⚠️ Verification Pending</span>}
+                        <h1 className="text-3xl font-bold mb-8 text-slate-800 flex items-center">
+                            Workstation
+                            <span className={`ml-4 text-sm px-3 py-1.5 rounded-full flex items-center border ${user.status === 'Verified' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
+                                {user.status === 'Verified' ? (
+                                    <>
+                                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
+                                        Verified Partner
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-2 h-2 rounded-full bg-amber-500 mr-2"></div>
+                                        Pending Verification
+                                    </>
+                                )}
+                            </span>
                         </h1>
 
                         {user.status === 'Pending Verification' && (
@@ -65,8 +78,8 @@ const PartnerDashboard = () => {
                                                 disabled={user.status === 'Pending Verification'}
                                                 onClick={() => updateOrderStatus(job.id, 'In Progress', user.name)}
                                                 className={`w-full py-2 rounded-lg font-bold transition-all ${user.status === 'Pending Verification'
-                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                        : 'bg-green-600 text-white hover:bg-green-700'
+                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-green-600 text-white hover:bg-green-700'
                                                     }`}
                                             >
                                                 {user.status === 'Pending Verification' ? 'Verification Required' : 'Accept & Start'}

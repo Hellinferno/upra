@@ -7,6 +7,10 @@ import * as z from 'zod';
 import { SERVICE_DETAILS } from '../data/servicesData';
 import { useOrderStore } from '../store/orderStore';
 
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
 const ServicePage = ({ onBook }) => {
     const { serviceName: rawServiceName } = useParams();
     const serviceName = decodeURIComponent(rawServiceName);
@@ -31,6 +35,8 @@ const ServicePage = ({ onBook }) => {
     };
 
     const [isBooking, setIsBooking] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     // Zod Schema
     const bookingSchema = z.object({
@@ -49,6 +55,27 @@ const ServicePage = ({ onBook }) => {
     });
 
     const onSubmit = async (data) => {
+        let documentUrl = null;
+
+        if (selectedFile) {
+            if (!storage) {
+                alert("Storage is not configured (Demo Mode). File will not be uploaded.");
+            } else {
+                setUploading(true);
+                try {
+                    const fileRef = ref(storage, `orders/${user?.uid || 'guest'}/${Date.now()}_${selectedFile.name}`);
+                    await uploadBytes(fileRef, selectedFile);
+                    documentUrl = await getDownloadURL(fileRef);
+                } catch (error) {
+                    console.error("Upload failed:", error);
+                    alert("File upload failed. Please try again.");
+                    setUploading(false);
+                    return;
+                }
+                setUploading(false);
+            }
+        }
+
         const orderDetails = {
             id: Date.now(),
             service: serviceName,
@@ -57,8 +84,19 @@ const ServicePage = ({ onBook }) => {
             status: 'Pending Allocation',
             documents: content.documents,
             userId: user?.uid || null,
-            assignedPartner: null
+            assignedPartner: null,
+            documentUrl: documentUrl
         };
+
+        try {
+            if (db) {
+                await addDoc(collection(db, 'orders'), orderDetails);
+            }
+        } catch (error) {
+            console.error("Error saving order to Firestore:", error);
+            // We might still want to continue to local store even if DB fails for demo purposes
+            // But ideally we alert the user
+        }
 
         addOrder(orderDetails);
 
@@ -142,9 +180,12 @@ const ServicePage = ({ onBook }) => {
                             {isBooking ? (
                                 <div className="animate-fade-in">
                                     <h3 className="font-bold text-xl mb-4 text-slate-900">Finalize Booking</h3>
-                                    <div className="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-800">
-                                        Simulating Payment & Document Upload...
-                                    </div>
+                                    {uploading && (
+                                        <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm text-blue-700 flex items-center">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
+                                            Uploading documents...
+                                        </div>
+                                    )}
                                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">YOUR NAME</label>
@@ -174,8 +215,17 @@ const ServicePage = ({ onBook }) => {
                                             />
                                             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
                                         </div>
-                                        <button disabled={isSubmitting} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed">
-                                            {isSubmitting ? 'Processing...' : 'Pay & Submit Order'}
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 mb-1">UPLOAD DOCUMENTS (Optional)</label>
+                                            <input
+                                                type="file"
+                                                onChange={(e) => setSelectedFile(e.target.files[0])}
+                                                className="w-full p-2 border border-gray-200 rounded text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">Upload relevant docs (PDF, Zip, Image)</p>
+                                        </div>
+                                        <button disabled={isSubmitting || uploading} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed">
+                                            {isSubmitting || uploading ? 'Processing...' : 'Pay & Submit Order'}
                                         </button>
                                         <button type="button" onClick={() => setIsBooking(false)} className="w-full text-gray-500 text-sm py-2">Cancel</button>
                                     </form>
