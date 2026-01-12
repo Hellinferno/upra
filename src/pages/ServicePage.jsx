@@ -216,6 +216,16 @@ const ServicePage = ({ onBook }) => {
                                             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
                                         </div>
                                         <div>
+                                            <label className="block text-xs font-bold text-gray-500 mb-1">CITY</label>
+                                            <input
+                                                {...register("city")}
+                                                type="text"
+                                                className={`w-full p-2 border rounded ${errors.city ? 'border-red-500' : 'border-gray-200'}`}
+                                                placeholder="e.g., Mumbai"
+                                            />
+                                            {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
+                                        </div>
+                                        <div>
                                             <label className="block text-xs font-bold text-gray-500 mb-1">UPLOAD DOCUMENTS (Optional)</label>
                                             <input
                                                 type="file"

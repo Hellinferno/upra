@@ -17,7 +17,7 @@ const PartnersLogin = ({ setView }) => {
 
     // Extended Registration State
     const [fullName, setFullName] = useState('');
-    const [agencyName, setAgencyName] = useState('');
+    const [firmName, setFirmName] = useState('');
     const [mobile, setMobile] = useState('');
     const [profession, setProfession] = useState('');
     const [city, setCity] = useState('');
@@ -42,10 +42,14 @@ const PartnersLogin = ({ setView }) => {
                 name: isSignUp ? fullName : "Demo Partner",
                 email: email,
                 isPartner: true,
+                role: 'partner',
                 profession: isSignUp ? profession : "CA", // Default to CA for demo
-                status: isSignUp ? 'Pending Verification' : 'Verified',
+                isVerified: false, // Default unverified for demo
+                status: 'Pending Verification', // Keep for UI compatibility if needed, but rely on isVerified
                 membershipNumber,
                 experience,
+                firmName,
+                city,
                 uid: "partner_" + Date.now()
             };
             setUser(mockUser);
@@ -83,10 +87,11 @@ const PartnersLogin = ({ setView }) => {
                     isPartner: true,
                     role: 'partner',
                     profession: profession,
-                    agencyName,
+                    firmName,
                     mobile,
                     city,
-                    status: 'Pending Verification',
+                    isVerified: false, // Schema Requirement
+                    status: 'Pending Verification', // Keeping for backward compat / easy reading
                     membershipNumber,
                     experience,
                     licenseUrl,
@@ -123,10 +128,14 @@ const PartnersLogin = ({ setView }) => {
                     name: isSignUp ? fullName : "Demo Partner",
                     email: email,
                     isPartner: true,
+                    role: 'partner',
                     profession: isSignUp ? profession : "CA",
+                    isVerified: isSignUp ? false : true,
                     status: isSignUp ? 'Pending Verification' : 'Verified',
                     membershipNumber,
                     experience,
+                    firmName,
+                    city,
                     uid: "partner_" + Date.now()
                 };
                 setUser(mockUser);
@@ -237,14 +246,14 @@ const PartnersLogin = ({ setView }) => {
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Agency/Firm Name</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Firm Name</label>
                                     <input
                                         type="text"
                                         required
                                         className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                                         placeholder="Legal Solutions Co."
-                                        value={agencyName}
-                                        onChange={(e) => setAgencyName(e.target.value)}
+                                        value={firmName}
+                                        onChange={(e) => setFirmName(e.target.value)}
                                     />
                                 </div>
 
