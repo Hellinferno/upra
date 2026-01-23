@@ -11,13 +11,14 @@ import { useOrderStore } from '../../store/orderStore';
 import toast from 'react-hot-toast';
 
 const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
-        document.body.appendChild(script);
-    });
+    // return new Promise((resolve) => {
+    //     const script = document.createElement('script');
+    //     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    //     script.onload = () => resolve(true);
+    //     script.onerror = () => resolve(false);
+    //     document.body.appendChild(script);
+    // });
+    return Promise.resolve(false);
 };
 
 const ServicePage = ({ onBook }) => {
@@ -68,6 +69,12 @@ const ServicePage = ({ onBook }) => {
     });
 
     const handlePayment = async (dbOrderId, amount, userDetails) => {
+        toast.error("Online payments are currently disabled.");
+        router.push('/dashboard');
+        return;
+
+        /* 
+        // RAZORPAY REMOVED TEMPORARILY
         const isLoaded = await loadRazorpayScript();
         if (!isLoaded) {
             toast.error('Razorpay SDK failed to load');
@@ -131,6 +138,7 @@ const ServicePage = ({ onBook }) => {
 
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
+        */
     };
 
     const onSubmit = async (data) => {
