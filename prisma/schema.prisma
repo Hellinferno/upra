@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  CLIENT
+  PARTNER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum Profession {
+  CA
+  CS
+  LAWYER
+  OTHER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  BLOCKED
+}
+
+enum OrderStatus {
+  CREATED
+  PAYMENT_PENDING
+  PAYMENT_COMPLETED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+/// Core Authentication Table - Lightweight, only for login
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  passwordHash    String     @map("password_hash")
+  role            Role       @default(CLIENT)
+  status          UserStatus @default(ACTIVE)
+  isEmailVerified Boolean    @default(false) @map("is_email_verified")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  serviceReceiver ServiceReceiver?
+  serviceProvider ServiceProvider?
+  sessions        Session[]
+
+  @@map("users")
+}
+
+/// Profile for Clients (Service Receivers)
+model ServiceReceiver {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  fullName  String   @map("full_name")
+  phone     String?
+  gstNumber String?  @map("gst_number")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("service_receivers")
+}
+
+/// Profile for Partners (Service Providers)
+model ServiceProvider {
+  id                 String             @id @default(uuid())
+  userId             String             @unique @map("user_id")
+  fullName           String             @map("full_name")
+  phone              String?
+  profession         Profession
+  otherProfession    String?            @map("other_profession")
+  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
+  documentsUrl       String?            @map("documents_url")
+  rating             Float?             @default(0)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("service_providers")
+}
+
+/// Session Management for secure login
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+/// Available Document Services
+model DocumentService {
+  id           String   @id @default(uuid())
+  documentType String   @map("document_type")
+  state        String   @default("All India")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orders       Order[]
+  requirements ServiceRequirement[]
+
+  @@map("document_services")
+}
+
+/// Requirements for each Document Service
+model ServiceRequirement {
+  id          String  @id @default(uuid())
+  serviceId   String  @map("service_id")
+  name        String
+  description String?
+  isRequired  Boolean @default(true) @map("is_required")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  service DocumentService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("service_requirements")
+}
+
+/// Orders linking Customers and Providers with Services
+model Order {
+  id            String        @id @default(uuid())
+  serviceId     String        @map("service_id")
+  customerId    String        @map("customer_id")
+  providerId    String?       @map("provider_id")
+  status        OrderStatus   @default(CREATED)
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  finalPrice    Decimal?      @map("final_price") @db.Decimal(10, 2)
+  ratingByUser  Float?        @map("rating_by_user")
+  remarksByUser String?       @map("remarks_by_user")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  service  DocumentService  @relation(fields: [serviceId], references: [id])
+  customer ServiceReceiver  @relation(fields: [customerId], references: [id])
+  provider ServiceProvider? @relation(fields: [providerId], references: [id])
+
+  @@map("orders")
+}

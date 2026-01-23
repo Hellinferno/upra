@@ -1,0 +1,74 @@
+[
+    {
+        "id": "private-limited",
+        "title": "Private Limited Company",
+        "category": "Startup",
+        "price": 6899,
+        "tags": [
+            "pvt ltd",
+            "incorporation",
+            "company registration"
+        ],
+        "description": "For businesses looking to raise funds & scale operations."
+    },
+    {
+        "id": "gst-reg",
+        "title": "GST Registration",
+        "category": "Tax",
+        "price": 1499,
+        "tags": [
+            "tax",
+            "goods and services",
+            "gstin"
+        ],
+        "description": "Mandatory for businesses with turnover > ₹20 Lakhs."
+    },
+    {
+        "id": "trademark-reg",
+        "title": "Trademark Registration",
+        "category": "IP",
+        "price": 5999,
+        "tags": [
+            "brand",
+            "logo",
+            "protection"
+        ],
+        "description": "Protect your brand name, logo and slogan."
+    },
+    {
+        "id": "fssai-lic",
+        "title": "FSSAI Registration",
+        "category": "License",
+        "price": 2999,
+        "tags": [
+            "food",
+            "license",
+            "safety"
+        ],
+        "description": "Food license for restaurants and food businesses."
+    },
+    {
+        "id": "itr-filing",
+        "title": "Income Tax Return",
+        "category": "Tax",
+        "price": 999,
+        "tags": [
+            "itr",
+            "tax",
+            "filing"
+        ],
+        "description": "Expert assisted ITR filing for individuals & businesses."
+    },
+    {
+        "id": "iec-code",
+        "title": "Import Export Code",
+        "category": "License",
+        "price": 2499,
+        "tags": [
+            "import",
+            "export",
+            "trade"
+        ],
+        "description": "License to import or export goods/services from India."
+    }
+]
