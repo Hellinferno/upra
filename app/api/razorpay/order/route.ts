@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { requireAuth } from '@/lib/auth-helpers';
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || "",
-    key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
+// Initialize Razorpay lazily or inside handler
+
 
 export async function POST(req: NextRequest) {
     try {
         const authResult = await requireAuth();
         if (!authResult.authorized) return authResult.response;
+
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID || "",
+            key_secret: process.env.RAZORPAY_KEY_SECRET || "",
+        });
 
         const body = await req.json();
         const { amount, currency = 'INR' } = body;
